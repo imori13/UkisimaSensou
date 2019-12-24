@@ -62,7 +62,7 @@ public class Map : MonoBehaviour
     void CreateNodes()
     {
         // ノードを作成
-        while (MapNode.Count < 30)
+        while (MapNode.Count < 40)
         {
             // 範囲内でランダムに生成
             Node instance = Instantiate(Node);
@@ -139,25 +139,27 @@ public class Map : MonoBehaviour
         List<Node> OpenList = new List<Node>();
 
         OpenList.Add(MapNode[0]);
-        Hoge(OpenList, MapNode[0]);
-        
-        foreach(var node in OpenList)
+        Hoge(ref OpenList, MapNode[0]);
+
+        Debug.Log(OpenList.Count);
+        foreach (var node in OpenList)
         {
-            if (!MapNode.Contains(node))
+            if (MapNode.Contains(node))
             {
                 node.GetComponent<Renderer>().material.color = Color.red;
+                Destroy(node.gameObject);
             }
         }
     }
 
     // 再帰処理
-    void Hoge(List<Node> OpenList, Node node)
+    void Hoge(ref List<Node> OpenList, Node node)
     {
-        foreach(var connectNode in node.ConnectNode)
+        foreach (var connectNode in node.ConnectNode)
         {
-            if (OpenList.Contains(connectNode)) { continue; }
+            if (OpenList.Contains(node)) { continue; }
             OpenList.Add(connectNode);
-            Hoge(OpenList, connectNode);
+            Hoge(ref OpenList, connectNode);
         }
     }
 }
