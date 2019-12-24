@@ -25,9 +25,9 @@ public class Node : MonoBehaviour
         switch (ConnectNode.Count)
         {
             case 0: flag = true; break;
-            case 1: flag = (Random.Range(0, 100) >= 90) ? (true) : (false); break;
-            case 2: flag = (Random.Range(0, 100) >= 70) ? (true) : (false); break;
-            default: flag = (Random.Range(0, 100) >= 50) ? (true) : (false); break;
+            case 1: flag = (Random.Range(0, 100) >= 95) ? (true) : (false); break;
+            case 2: flag = (Random.Range(0, 100) >= 80) ? (true) : (false); break;
+            default: flag = (Random.Range(0, 100) >= 75) ? (true) : (false); break;
         }
         return flag;
     }
