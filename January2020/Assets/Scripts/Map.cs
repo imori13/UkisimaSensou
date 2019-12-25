@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// 649警告を無視する
+#pragma warning disable 649
+
 public class Map : MonoBehaviour
 {
     [SerializeField] GameObject Nodes;
@@ -11,7 +14,7 @@ public class Map : MonoBehaviour
 
     List<Node> MapNode = new List<Node>();  // 全ノードを格納するリスト
     List<Road> MapRoad = new List<Road>();  // 全部の道を格納するリスト
-    Vector3 GenerateSize = new Vector3(25, 0.5f, 15);   // 生成範囲
+    Vector3 GenerateSize = new Vector3(25, 0, 15);   // 生成範囲
     Node selectNode;    // 現在選択しているノード
 
     void Start()
@@ -19,9 +22,13 @@ public class Map : MonoBehaviour
         // 選択しているノードをnull
         selectNode = null;
 
-        CreateNodes();
-        CreateRoads();
-        RemoveIsolation();
+        // ノードを作成
+        while (MapNode.Count < 40)
+        {
+            CreateNodes();
+            CreateRoads();
+            RemoveIsolation();
+        }
     }
 
     void Update()
@@ -31,10 +38,10 @@ public class Map : MonoBehaviour
             // 前にセレクトしたノードの色を戻す
             if (selectNode != null)
             {
-                selectNode.Renderer.material.color = Color.green;
+                selectNode.Renderer.material.color = Node.NORMALCOLOR;
                 foreach (var a in selectNode.ConnectNode)
                 {
-                    a.Renderer.material.color = Color.green;
+                    a.Renderer.material.color = Node.NORMALCOLOR;
                 }
             }
 
@@ -107,21 +114,24 @@ public class Map : MonoBehaviour
                 Road road = Instantiate(Road).GetComponent<Road>();
                 road.transform.rotation = Quaternion.LookRotation(distance, Vector3.up);
                 road.transform.position = (MapNode[i].transform.position) + (road.transform.forward * distance.magnitude / 2f);
-                road.transform.localScale = new Vector3(0.1f, 0.1f, distance.magnitude);
+                road.transform.localScale = new Vector3(0.5f, 0.1f, distance.magnitude);
                 road.transform.SetParent(Roads.transform);
                 road.PosS = MyMath.ConversionVector2(MapNode[i].transform.position);
                 road.PosE = MyMath.ConversionVector2(MapNode[j].transform.position);
 
                 // すでにある道と交差していたら、スキップ
+                bool flag = false;
                 foreach (var r in MapRoad)
                 {
                     if (MyMath.JudgeIentersected(road.PosS, road.PosE, r.PosS, r.PosE))
                     {
                         road.GetComponent<Renderer>().material.color = Color.red;
                         Destroy(road.gameObject);
+                        flag = true;
                         continue;
                     }
                 }
+                if (flag) continue;
 
                 // 重なっていないなら追加
                 MapRoad.Add(road);
@@ -129,6 +139,10 @@ public class Map : MonoBehaviour
                 // つながっているノードの参照をお互いに渡す
                 MapNode[i].ConnectNode.Add(MapNode[j]);
                 MapNode[j].ConnectNode.Add(MapNode[i]);
+
+                // 繋がっている道の参照をお互いに渡す
+                MapNode[i].ConnectRoad.Add(road);
+                MapNode[j].ConnectRoad.Add(road);
             }
         }
     }
@@ -138,28 +152,40 @@ public class Map : MonoBehaviour
     {
         List<Node> OpenList = new List<Node>();
 
+        // 最初に追加されたノードを親とする
         OpenList.Add(MapNode[0]);
-        Hoge(ref OpenList, MapNode[0]);
+        // 親から繋がっているノードを次々にリストに追加していく
+        RemoveIsolation_Method(ref OpenList, MapNode[0]);
 
-        Debug.Log(OpenList.Count);
-        foreach (var node in OpenList)
+        // リストに入っていないのであれば孤立しているとみなす
+        MapNode.ForEach(m =>
         {
-            if (MapNode.Contains(node))
+            if (!OpenList.Contains(m))
             {
-                node.GetComponent<Renderer>().material.color = Color.red;
-                Destroy(node.gameObject);
+                // 消すノードの繋がっている道の削除フラグを立てる
+                m.ConnectRoad.ForEach(r => { r.RemoveFlag = true; });
+                Destroy(m.gameObject);
             }
-        }
+        });
+        MapNode.RemoveAll(m => !OpenList.Contains(m));
+
+        // 孤立した道を削除
+        MapRoad.ForEach(m => { if (m.RemoveFlag) { Destroy(m.gameObject); } });
+        MapRoad.RemoveAll(m => m.RemoveFlag);
     }
 
-    // 再帰処理
-    void Hoge(ref List<Node> OpenList, Node node)
+    // 孤立を削除する際の再帰処理
+    void RemoveIsolation_Method(ref List<Node> OpenList, Node node)
     {
+        // 繋がっているノードを次々にリストに入れていく
         foreach (var connectNode in node.ConnectNode)
         {
-            if (OpenList.Contains(node)) { continue; }
+            // すでに入っているならスキップ
+            if (OpenList.Contains(connectNode)) { continue; }
+            // 追加
             OpenList.Add(connectNode);
-            Hoge(ref OpenList, connectNode);
+            // 繋がっているノードからさらに繋がっているノードをリストに入れていく
+            RemoveIsolation_Method(ref OpenList, connectNode);
         }
     }
 }
