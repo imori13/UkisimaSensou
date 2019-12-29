@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 // 649警告を無視する
@@ -15,13 +14,9 @@ public class Map : MonoBehaviour
     List<Node> MapNode = new List<Node>();  // 全ノードを格納するリスト
     List<Road> MapRoad = new List<Road>();  // 全部の道を格納するリスト
     Vector3 GenerateSize = new Vector3(25, 0, 15);   // 生成範囲
-    Node selectNode;    // 現在選択しているノード
 
     void Start()
     {
-        // 選択しているノードをnull
-        selectNode = null;
-
         // ノードを作成
         while (MapNode.Count < 40)
         {
@@ -33,36 +28,7 @@ public class Map : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            // 前にセレクトしたノードの色を戻す
-            if (selectNode != null)
-            {
-                selectNode.Renderer.material.color = Node.NORMALCOLOR;
-                foreach (var a in selectNode.ConnectNode)
-                {
-                    a.Renderer.material.color = Node.NORMALCOLOR;
-                }
-            }
-
-            // 一旦選択を解除
-            selectNode = null;
-
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit, 500.0f))
-            {
-                if (hit.collider.tag == "Node")
-                {
-                    // 新しく選択したノードの色を変える
-                    selectNode = hit.collider.gameObject.GetComponent<Node>();
-                    selectNode.Renderer.material.color = Color.red;
-                    foreach (var a in selectNode.ConnectNode)
-                    {
-                        a.Renderer.material.color = Color.yellow;
-                    }
-                }
-            }
-        }
+        
     }
 
     // ノードを作成
@@ -107,7 +73,7 @@ public class Map : MonoBehaviour
 
                 // 距離が離れすぎているものは橋を繋げない
                 Vector3 distance = MapNode[j].transform.position - MapNode[i].transform.position;
-                if (Vector3.SqrMagnitude(distance) >= (6 * 6)) { continue; }
+                if (Vector3.SqrMagnitude(distance) >= (9 * 9)) { continue; }
                 if (MapNode[j].ConnectNode.Count >= 4 || MapNode[i].ConnectNode.Count >= 4) { continue; }
 
                 // 橋を生成

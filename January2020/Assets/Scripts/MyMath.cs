@@ -26,6 +26,30 @@ public static class MyMath
         var td = (p1_s.x - p1_e.x) * (p2_e.y - p1_s.y) + (p1_s.y - p1_e.y) * (p1_s.x - p2_e.x);
 
         return tc * td < 0 && ta * tb < 0;
-        // return tc * td <= 0 && ta * tb <= 0; // 端点を含む場合
+    }
+
+    // 重みづけランダム、返り値は0,1,2,3みたいな連番
+    public static int GetRandomIndex(int[] array)
+    {
+        int totalWeight = 0;
+        int value = 0;
+        int returnValue = -1;
+        for (int i = 0; i < array.Length; i++)
+        {
+            totalWeight += array[i];
+        }
+        value = Random.Range(1, totalWeight + 1);
+
+        for (var i = 0; i < array.Length; i++)
+        {
+            if (array[i] >= value)
+            {
+                returnValue = i;
+                break;
+            }
+            value -= array[i];
+        }
+
+        return returnValue;
     }
 }

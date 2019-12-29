@@ -1,14 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
     Vector3 velocity;
     Vector3 destVelocity;
 
-    static readonly Vector3 clampMinPos = new Vector3(-20, 5, -15);
-    static readonly Vector3 clampMaxPos = new Vector3(20, 30, 5);
+    static readonly Vector3 clampMinPos = new Vector3(-100, 5, -100);
+    static readonly Vector3 clampMaxPos = new Vector3(100, 15, 100);
 
     void Start()
     {
@@ -19,10 +17,6 @@ public class CameraController : MonoBehaviour
     {
         destVelocity = Vector3.zero;
         // 移動処理
-        //if (Input.GetKey(KeyCode.W) || Input.mousePosition.y > Screen.height - Screen.height / 100f) { destVelocity += Vector3.forward; }
-        //if (Input.GetKey(KeyCode.S) || Input.mousePosition.y < Screen.height / 100f) { destVelocity += Vector3.back; }
-        //if (Input.GetKey(KeyCode.A) || Input.mousePosition.x < Screen.width / 100f) { destVelocity += Vector3.left; }
-        //if (Input.GetKey(KeyCode.D) || Input.mousePosition.x > Screen.width - Screen.width / 100f) { destVelocity += Vector3.right; }
         if (Input.GetKey(KeyCode.W)) { destVelocity += Vector3.forward; }
         if (Input.GetKey(KeyCode.S)) { destVelocity += Vector3.back; }
         if (Input.GetKey(KeyCode.A)) { destVelocity += Vector3.left; }
