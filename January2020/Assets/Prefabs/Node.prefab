@@ -92,7 +92,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b178a60bf9b7ba74db19f127ac7fe57d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Commander: {fileID: 1466139401478247714, guid: 1b10e30b899a2744381357b1bf9f19ab,
+  CommanderPrefab: {fileID: 1466139401478247714, guid: 1b10e30b899a2744381357b1bf9f19ab,
+    type: 3}
+  SoldierPrefab: {fileID: 1639240123805444336, guid: 43feeb50f6007ca49b56f0beeb385442,
     type: 3}
 --- !u!65 &3980115432831330822
 BoxCollider:
