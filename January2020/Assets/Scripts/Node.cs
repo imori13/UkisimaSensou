@@ -14,8 +14,8 @@ public class Node : MonoBehaviour
     [SerializeField] GameObject CommanderPrefab;
     [SerializeField] GameObject SoldierPrefab;
 
-    public Color Normal_Color { get; private set; }   // 国ごとの通常色
-    public PlayerEnum PlayerEnum { get; set; }
+    public Color Normal_Color { get; set; }   // 国ごとの通常色
+    public PlayerEnum PlayerEnum { get; set; } = PlayerEnum.None;
 
     public Renderer Renderer { get; private set; }
 
@@ -28,11 +28,14 @@ public class Node : MonoBehaviour
     // ノードに属している兵士の参照
     public List<Soldier> Soldier { get; private set; } = new List<Soldier>();
 
+    // 本拠地か？
+    public bool IsBaseNode { get; set; }
+
     void Start()
     {
         // とりあえずランダムで国を決める
-        PlayerEnum = (PlayerEnum)Random.Range(0, (int)PlayerEnum.Count);
-        UpdateNodeColor();
+        //PlayerEnum = (PlayerEnum)Random.Range(0, (int)PlayerEnum.Count);
+        //UpdateNodeColor();
 
         Renderer = GetComponent<Renderer>();
         Renderer.material.color = Normal_Color;
@@ -90,7 +93,10 @@ public class Node : MonoBehaviour
             case PlayerEnum.Player01: Normal_Color = PLAYER01_COLOR; break;
             case PlayerEnum.Player02: Normal_Color = PLAYER02_COLOR; break;
             case PlayerEnum.Player03: Normal_Color = PLAYER03_COLOR; break;
+            case PlayerEnum.None: Normal_Color = Color.black; break;
         }
+
+        if (IsBaseNode) { Normal_Color *= 2; }
     }
 
     public void Attack(Node node)

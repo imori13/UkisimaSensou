@@ -6,7 +6,7 @@ public class CameraController : MonoBehaviour
     Vector3 destVelocity;
 
     static readonly Vector3 clampMinPos = new Vector3(-100, 3, -100);
-    static readonly Vector3 clampMaxPos = new Vector3(100, 7, 100);
+    static readonly Vector3 clampMaxPos = new Vector3(100, 20, 100);
 
     void Start()
     {

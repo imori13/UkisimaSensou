@@ -10,7 +10,7 @@ class MoveBox : MonoBehaviour
     public List<Commander> Commander { get; private set; } = new List<Commander>();
     public List<Soldier> Soldier { get; private set; } = new List<Soldier>();
 
-    static readonly float speed = 1f;
+    static readonly float speed = 5f;
 
     void Start()
     {
@@ -25,7 +25,7 @@ class MoveBox : MonoBehaviour
         transform.position += direction.normalized * speed * Time.deltaTime;
 
         // ノードに近くなったら終了
-        if (direction.sqrMagnitude <= (1 * 1))
+        if (direction.sqrMagnitude <= (0.5f*0.5f))
         {
             Arrival();
             Destroy(gameObject);

@@ -73,6 +73,8 @@ public class Player : MonoBehaviour
                             // MoveBoxにSelectNodeのPlayerEnum情報を与える
                             movebox.PlayerEnum = selectNode.PlayerEnum;
 
+                            Debug.Log("Select : " + selectNode.PlayerEnum.ToString() + " Right : " + rightClickNode.PlayerEnum.ToString());
+
                             // 移動
                             if (selectNode.PlayerEnum == rightClickNode.PlayerEnum)
                             {

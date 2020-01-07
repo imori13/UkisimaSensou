@@ -3,6 +3,6 @@
     Player01,
     Player02,
     Player03,
-
-    Count,  // 最後のインデックス
+    
+    None,  // 最後のインデックス
 }
