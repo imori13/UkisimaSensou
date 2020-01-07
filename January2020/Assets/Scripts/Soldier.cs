@@ -23,7 +23,7 @@ public class Soldier : MonoBehaviour
         float scale = ParentNode.transform.localScale.x / 2f;
         transform.position
             = ParentNode.transform.position
-            + (Vector3.up * 0.5f)
+            + (Vector3.up * 0.25f)
             + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
     }
 }

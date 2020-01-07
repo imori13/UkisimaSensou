@@ -13,29 +13,44 @@ public class Map : MonoBehaviour
 
     List<Node> MapNode = new List<Node>();  // 全ノードを格納するリスト
     List<Road> MapRoad = new List<Road>();  // 全部の道を格納するリスト
-    Vector3 GenerateSize = new Vector3(25, 0, 15);   // 生成範囲
+    Vector3 GenerateSize = new Vector3(50, 0, 30);   // 生成範囲
+
+    List<Node> PlayerBaseNode = new List<Node>();   // 各プレイヤーの本拠地
+
+    static readonly int CreateNodeCount = 80;
 
     void Start()
     {
         // ノードを作成
-        while (MapNode.Count < 40)
+        int count = 0;
+        while (MapNode.Count < CreateNodeCount)
         {
             CreateNodes();
             CreateRoads();
             RemoveIsolation();
+
+            count++;
+            if (count > 100)
+            {
+                Debug.Log("[ノードを作成の全工程]を100回試行したため中断");
+                break;
+            }
         }
+
+        // ノードを割り当て
+        SetPlayerNode();
     }
 
     void Update()
     {
-        
+
     }
 
     // ノードを作成
     void CreateNodes()
     {
         // ノードを作成
-        while (MapNode.Count < 40)
+        while (MapNode.Count < CreateNodeCount)
         {
             // 範囲内でランダムに生成
             Node instance = Instantiate(Node);
@@ -45,7 +60,7 @@ public class Map : MonoBehaviour
             bool flag = false;
             foreach (var node in MapNode)
             {
-                if (Vector3.SqrMagnitude(MyMath.ConversionVector2(instance.transform.position) - MyMath.ConversionVector2(node.transform.position)) <= (3 * 3))
+                if (Vector3.SqrMagnitude(MyMath.ConversionVector2(instance.transform.position) - MyMath.ConversionVector2(node.transform.position)) <= (4 * 4))
                 {
                     Destroy(instance.gameObject);
                     flag = true;
@@ -153,5 +168,12 @@ public class Map : MonoBehaviour
             // 繋がっているノードからさらに繋がっているノードをリストに入れていく
             RemoveIsolation_Method(ref OpenList, connectNode);
         }
+    }
+
+    // ノードに国を割り当てていく
+    void SetPlayerNode()
+    {
+        // 各プレイヤーランダムに拠点を決める
+
     }
 }
