@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Node : MonoBehaviour
 {
-    public static readonly Color PLAYER01_COLOR = new Color(255, 150, 150) / 255f;
+    public static readonly Color PLAYER01_COLOR = new Color(255, 120, 120) / 255f;
     public static readonly Color PLAYER02_COLOR = new Color(150, 150, 255) / 255f;
     public static readonly Color PLAYER03_COLOR = new Color(150, 255, 150) / 255f;
     public static readonly Color SELECT_COLOR = Color.white;
@@ -30,6 +30,10 @@ public class Node : MonoBehaviour
 
     // 本拠地か？
     public bool IsBaseNode { get; set; }
+    // ルート検索用コスト
+    public float Cost { get; set; } = -1;
+    public bool Done { get; set; } = false;
+    public Node PrevNode { get; set; } = null;
 
     void Start()
     {
@@ -93,6 +97,11 @@ public class Node : MonoBehaviour
             case PlayerEnum.Player01: Normal_Color = PLAYER01_COLOR; break;
             case PlayerEnum.Player02: Normal_Color = PLAYER02_COLOR; break;
             case PlayerEnum.Player03: Normal_Color = PLAYER03_COLOR; break;
+            case PlayerEnum.Player04: Normal_Color = Color.yellow; break;
+            case PlayerEnum.Player05: Normal_Color = Color.cyan; break;
+            case PlayerEnum.Player06: Normal_Color = new Color(255, 0, 0) / 255f; break;
+            case PlayerEnum.Player07: Normal_Color = Color.black; break;
+            case PlayerEnum.Player08: Normal_Color = Color.white; break;
             case PlayerEnum.None: Normal_Color = Color.black; break;
         }
 

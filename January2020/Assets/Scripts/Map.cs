@@ -12,13 +12,20 @@ public class Map : MonoBehaviour
     [SerializeField] Node Node;
     [SerializeField] Road Road;
 
-    List<Node> MapNode = new List<Node>();  // 全ノードを格納するリスト
-    List<Road> MapRoad = new List<Road>();  // 全部の道を格納するリスト
-    Vector3 GenerateSize = new Vector3(50, 0, 30);   // 生成範囲
+    // prefab
+    [SerializeField] GameObject CommanderPrefab;
+    [SerializeField] GameObject SoldierPrefab;
 
-    Node[] PlayerBaseNode = new Node[3];   // 各プレイヤーの本拠地
+    public List<Node> MapNode { get; private set; } = new List<Node>();  // 全ノードを格納するリスト
+    public List<Road> MapRoad { get; private set; } = new List<Road>();  // 全部の道を格納するリスト
+    Vector3 GenerateSize = new Vector3(30, 0, 30);   // 生成範囲
 
-    static readonly int CreateNodeCount = 70;
+    public static readonly int PlayerCount = 5;
+    public Node[] PlayerBaseNode { get; private set; } = new Node[PlayerCount];   // 各プレイヤーの本拠地
+    float[] time = new float[PlayerCount];
+    float[] limit = new float[PlayerCount];
+
+    static readonly int CreateNodeCount = 40;
 
     void Start()
     {
@@ -47,7 +54,7 @@ public class Map : MonoBehaviour
 
     void Update()
     {
-
+        GenerateCharacters();
     }
 
     // ノードを作成
@@ -64,7 +71,7 @@ public class Map : MonoBehaviour
             bool flag = false;
             foreach (var node in MapNode)
             {
-                if (Vector3.SqrMagnitude(MyMath.ConversionVector2(instance.transform.position) - MyMath.ConversionVector2(node.transform.position)) <= (3 * 3))
+                if (Vector3.SqrMagnitude(MyMath.ConversionVector2(instance.transform.position) - MyMath.ConversionVector2(node.transform.position)) <= (5 * 5))
                 {
                     Destroy(instance.gameObject);
                     flag = true;
@@ -188,111 +195,161 @@ public class Map : MonoBehaviour
     // ノードに国を割り当てていく
     void SetPlayerNode()
     {
-        // 各プレイヤーランダムに拠点を決める
-        for (int i = 0; i < 3; i++)
+        while (true)
         {
-            while (true)
+            // 各プレイヤーランダムに拠点を決める
+            for (int i = 0; i < PlayerCount; i++)
             {
-                Node baseNode = MapNode[Random.Range(0, MapNode.Count)];
-
-                // すでにそこ誰かの本拠地じゃないなら
-                if (!baseNode.IsBaseNode)
+                while (true)
                 {
-                    // プレイヤーの本拠地に設定する
-                    baseNode.PlayerEnum = (PlayerEnum)i;
-                    baseNode.IsBaseNode = true;
-                    PlayerBaseNode[i] = baseNode;
+                    Node baseNode = MapNode[Random.Range(0, MapNode.Count)];
 
+                    // すでにそこ誰かの本拠地じゃないなら
+                    if (!baseNode.IsBaseNode)
+                    {
+                        // プレイヤーの本拠地に設定する
+                        baseNode.PlayerEnum = (PlayerEnum)i;
+                        baseNode.IsBaseNode = true;
+                        PlayerBaseNode[i] = baseNode;
+
+                        break;
+                    }
+                }
+            }
+
+            List<Node>[] openNode = new List<Node>[PlayerCount];
+
+            for (int i = 0; i < PlayerCount; i++)
+            {
+                openNode[i] = new List<Node>();
+                openNode[i].Add(PlayerBaseNode[i]);
+            }
+
+            int count = 0;
+            int num = 0;
+            while (MapNode.Any(n => n.PlayerEnum == PlayerEnum.None))
+            {
+                // 無限ループ回避用
+                count++;
+                if (count > 10000)
+                {
+                    Debug.Log("無限ループに陥ったため処理を停止");
+                    break;
+                }
+
+                // もしプレイヤーがどこにも開けるノードがないなら、次のプレイヤーに見送ってスキップ
+                if (!openNode[num].Any(l => l.ConnectNode.Any(n => n.PlayerEnum == PlayerEnum.None)))
+                {
+                    num++;
+                    if (num >= PlayerCount) { num = 0; }
+                    continue;
+                }
+
+                // プレイヤーの開けるリストから、ランダムに一つ選ぶ
+                Node parentNode = openNode[num][Random.Range(0, openNode[num].Count)];
+                // もし接続先がないならスキップ
+                if (parentNode.ConnectNode.Count <= 0) continue;
+
+                // もし接続先に開けるノードがないなら、現在のノードをリストから外してスキップする
+                if (!parentNode.ConnectNode.Any(n => n.PlayerEnum == PlayerEnum.None))
+                {
+                    openNode[num].Remove(parentNode);
+                    continue;
+                }
+
+                // 接続先の中からランダムで一つ選ぶ
+                Node newNode = parentNode.ConnectNode[Random.Range(0, parentNode.ConnectNode.Count)];
+                if (newNode.PlayerEnum != PlayerEnum.None) continue;    // もしすでに誰かの領土ならスキップ
+
+                // 領土を占有
+                newNode.PlayerEnum = (PlayerEnum)num;
+                newNode.UpdateNodeColor();
+
+                // リストに新しく開く場所を追加
+                openNode[num].Add(newNode);
+
+                // 接続先が全部開けなくなったらリストから削除
+                openNode[num].RemoveAll(n => !n.ConnectNode.Any(c => c.PlayerEnum == PlayerEnum.None));
+
+                // 次のプレイヤーに
+                num++;
+                if (num >= PlayerCount) { num = 0; }
+
+                count = 0;
+            }
+
+            // もしどれかのプレイヤーのノード数が条件以下の数だったら
+            // もう一度本拠地を決めるところから処理をやり直す
+            bool flag = false;
+            for (int i = 0; i < PlayerCount; i++)
+            {
+                // もしプレイヤーのノードの数が一定以下なら
+                if (MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count() <= 5)
+                {
+                    // 所属を初期化
+                    flag = true;
+                    MapNode.ForEach(n => n.PlayerEnum = PlayerEnum.None);
+                    for (int j = 0; j < PlayerCount; j++)
+                    {
+                        PlayerBaseNode[j].IsBaseNode = false;
+                        PlayerBaseNode[j] = null;
+                    }
                     break;
                 }
             }
-        }
-
-        List<Node>[] openNode = new List<Node>[3];
-
-        for (int i = 0; i < 3; i++)
-        {
-            openNode[i] = new List<Node>();
-            openNode[i].Add(PlayerBaseNode[i]);
-        }
-
-        int count = 0;
-        int num = 0;
-        while (MapNode.Any(n => n.PlayerEnum == PlayerEnum.None))
-        {
-            // 無限ループ回避用
-            count++;
-            if (count > 10000)
-            {
-                Debug.Log("無限ループに陥ったため処理を停止");
-                break;
-            }
-
-            // もしプレイヤーがどこにも開けるノードがないなら、次のプレイヤーに見送ってスキップ
-            if (!openNode[num].Any(l => l.ConnectNode.Any(n => n.PlayerEnum == PlayerEnum.None)))
-            {
-                num++;
-                if (num >= 3) { num = 0; }
-                continue;
-            }
-
-            // プレイヤーの開けるリストから、ランダムに一つ選ぶ
-            Node parentNode = openNode[num][Random.Range(0, openNode[num].Count)];
-            // もし接続先がないならスキップ
-            if (parentNode.ConnectNode.Count <= 0) continue;
-
-            // もし接続先に開けるノードがないなら、現在のノードをリストから外してスキップする
-            if (!parentNode.ConnectNode.Any(n => n.PlayerEnum == PlayerEnum.None))
-            {
-                openNode[num].Remove(parentNode);
-                continue;
-            }
-
-            // 接続先の中からランダムで一つ選ぶ
-            Node newNode = parentNode.ConnectNode[Random.Range(0, parentNode.ConnectNode.Count)];
-            if (newNode.PlayerEnum != PlayerEnum.None) continue;    // もしすでに誰かの領土ならスキップ
-
-            // 領土を占有
-            newNode.PlayerEnum = (PlayerEnum)num;
-            newNode.UpdateNodeColor();
-
-            // リストに新しく開く場所を追加
-            openNode[num].Add(newNode);
-
-            // 接続先が全部開けなくなったらリストから削除
-            openNode[num].RemoveAll(n => !n.ConnectNode.Any(c => c.PlayerEnum == PlayerEnum.None));
-
-            // 次のプレイヤーに
-            num++;
-            if (num >= 3) { num = 0; }
-
-            count = 0;
-        }
-
-        // もしどれかのプレイヤーのノード数が条件以下の数だったら
-        // もう一度本拠地を決めるところから処理をやり直す
-        for (int i = 0; i < 3; i++)
-        {
-            // もしプレイヤーのノードの数が一定以下なら
-            Debug.Log(((PlayerEnum)i).ToString() + ":" + MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count());
-            if (MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count() <= 10)
-            {
-                // 所属を初期化
-                MapNode.ForEach(n => n.PlayerEnum = PlayerEnum.None);
-                for (int j = 0; j < 3; j++)
-                {
-                    PlayerBaseNode[j].IsBaseNode = false;
-                    PlayerBaseNode[j] = null;
-                    Debug.Log("生成をやり直す");
-                }
-
-                // もう一度関数を呼び出す
-                SetPlayerNode();
-
-                break;
-            }
+            if (!flag) { break; }
         }
 
         MapNode.ForEach(n => n.UpdateNodeColor());
+    }
+
+    void GenerateCharacters()
+    {
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            time[i] += Time.deltaTime;
+
+            float countMax = 50;
+            float countMin = 5;
+            float count = MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count();
+            count = Mathf.Clamp(count, countMin, countMax);
+
+            float limitMax = 5;
+            float limitMin = 1;
+            // (count-5) / (50-5) => [ 5/50 => 0/45 ] [ 50/50 => 45/45 ]
+            float rate = (count - countMin) / (countMax - countMin);
+            limit[i] = Mathf.Lerp(limitMax, limitMin, rate);
+
+            Debug.Log("player : " + (PlayerEnum)i + " count : " + count + " limit : " + limit[i]);
+
+            if (time[i] >= limit[i])
+            {
+                time[i] = 0;
+                CreateChara((PlayerEnum)i);
+            }
+        }
+    }
+
+    void CreateChara(PlayerEnum playerEnum)
+    {
+        // 指揮官を生成
+        List<Node> list1 = MapNode.Where(n => n.PlayerEnum == playerEnum).ToList();
+        Commander commander = Instantiate(CommanderPrefab).GetComponent<Commander>();
+        Node node1 = list1[Random.Range(0, list1.Count)];
+        node1.Commander.Add(commander);
+        commander.UpdateNode(node1);
+
+        // 兵士を生成
+        // 本拠地に一体
+        Soldier soldier1 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
+        PlayerBaseNode[(int)playerEnum].Soldier.Add(soldier1);
+        soldier1.UpdateNode(PlayerBaseNode[(int)playerEnum]);
+
+        // 自分の領土ランダムに一体
+        List<Node> list2 = MapNode.Where(n => n.PlayerEnum == playerEnum).ToList();
+        Soldier soldier2 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
+        Node node2 = list2[Random.Range(0, list2.Count)];
+        node2.Soldier.Add(soldier2);
+        soldier2.UpdateNode(node2);
     }
 }

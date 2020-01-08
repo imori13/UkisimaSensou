@@ -6,7 +6,7 @@ public class CameraController : MonoBehaviour
     Vector3 destVelocity;
 
     static readonly Vector3 clampMinPos = new Vector3(-100, 3, -100);
-    static readonly Vector3 clampMaxPos = new Vector3(100, 20, 100);
+    static readonly Vector3 clampMaxPos = new Vector3(100, 40, 100);
 
     void Start()
     {
@@ -31,13 +31,13 @@ public class CameraController : MonoBehaviour
 
         // 目標移動量を現在の移動量に線形補完を利用してイージング処理を行う
         velocity = Vector3.Lerp(velocity, destVelocity, 0.1f);
-        
+
         // 上下移動
         if (Input.GetAxis("Mouse ScrollWheel") > 0) { velocity += Vector3.down * updownSpeed; }
         if (Input.GetAxis("Mouse ScrollWheel") < 0) { velocity += Vector3.up * updownSpeed; }
 
         // 移動量を座標に足す
-        transform.position += velocity * 0.5f;
+        transform.position += velocity * Time.deltaTime * 60;
 
         // 座標を指定の範囲に制限する
         transform.position = new Vector3(

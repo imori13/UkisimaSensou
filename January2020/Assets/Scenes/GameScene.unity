@@ -614,6 +614,10 @@ MonoBehaviour:
   Roads: {fileID: 204729851}
   Node: {fileID: 186564725629547487, guid: dd8fc66815e25504ebec89d7b0bfd98d, type: 3}
   Road: {fileID: 4097422512519831745, guid: 988baa773988ae04b927af5829ec4777, type: 3}
+  CommanderPrefab: {fileID: 1466139401478247714, guid: 1b10e30b899a2744381357b1bf9f19ab,
+    type: 3}
+  SoldierPrefab: {fileID: 1639240123805444336, guid: 43feeb50f6007ca49b56f0beeb385442,
+    type: 3}
 --- !u!4 &1712769812
 Transform:
   m_ObjectHideFlags: 0
@@ -661,6 +665,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MoveBoxes: {fileID: 107361961}
+  map: {fileID: 1712769811}
 --- !u!4 &1938765854
 Transform:
   m_ObjectHideFlags: 0
