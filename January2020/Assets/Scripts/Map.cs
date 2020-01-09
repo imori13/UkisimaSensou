@@ -18,14 +18,14 @@ public class Map : MonoBehaviour
 
     public List<Node> MapNode { get; private set; } = new List<Node>();  // 全ノードを格納するリスト
     public List<Road> MapRoad { get; private set; } = new List<Road>();  // 全部の道を格納するリスト
-    Vector3 GenerateSize = new Vector3(30, 0, 30);   // 生成範囲
+    Vector3 GenerateSize = new Vector3(50, 0, 30);   // 生成範囲
 
-    public static readonly int PlayerCount = 5;
+    public static readonly int PlayerCount = 2;
     public Node[] PlayerBaseNode { get; private set; } = new Node[PlayerCount];   // 各プレイヤーの本拠地
     float[] time = new float[PlayerCount];
     float[] limit = new float[PlayerCount];
 
-    static readonly int CreateNodeCount = 40;
+    static readonly int CreateNodeCount = 80;
 
     void Start()
     {

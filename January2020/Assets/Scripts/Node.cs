@@ -31,7 +31,7 @@ public class Node : MonoBehaviour
     // 本拠地か？
     public bool IsBaseNode { get; set; }
     // ルート検索用コスト
-    public float Cost { get; set; } = -1;
+    public float Cost { get; set; } = float.MaxValue;
     public bool Done { get; set; } = false;
     public Node PrevNode { get; set; } = null;
 
