@@ -13,74 +13,84 @@ public class Player : MonoBehaviour
     {
         // 選択しているノードをnull
         selectNode = null;
-
-        MoveAI();
     }
 
     void Update()
     {
         LeftClick();
         RightClick();
-        //AttackAI();
+        AttackAI();
         MoveAI();
         Quit();
     }
 
     void Move(Node node1, Node node2)
     {
-        MoveBox movebox = CreateMovebox(node1, node2);
-
-        // 兵士がいないなら早期リターン
-        if (node1.Soldier.Count <= 0)
+        if (node1.MovePermission && node2.MovePermission)
         {
-            Destroy(movebox.gameObject);
-            return;
+            MoveBox movebox = CreateMovebox(node1, node2);
+
+            // 兵士がいないなら早期リターン、または開いてノードの兵士が一定以上なら移動できない
+            if (node1.Soldier.Count <= 0 || node2.Soldier.Count >= 5)
+            {
+                Destroy(movebox.gameObject);
+                return;
+            }
+
+            node1.MovePermission = false;
+            node2.MovePermission = false;
+
+            // [移動BOXに兵士を移動]
+            movebox.Soldier.AddRange(node1.Soldier.Take(node2.Soldier.Count - 5));
+            node1.Soldier.Clear();
+
+            // 兵士を自分の子オブジェクトに格納する
+            movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
+
+            // 親をNULLに更新
+            movebox.Soldier.ForEach(s => s.UpdateNode(null));
         }
-
-        // [移動BOXに兵士を移動]
-        movebox.Soldier.AddRange(node1.Soldier);
-        node1.Soldier.Clear();
-
-        // 兵士を自分の子オブジェクトに格納する
-        movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
-
-        // 親をNULLに更新
-        movebox.Soldier.ForEach(s => s.UpdateNode(null));
     }
 
     void Attack(Node node1, Node node2)
     {
-        MoveBox movebox = CreateMovebox(node1, node2);
-
-        // 指揮官が二人未満なら、または兵士がいないなら早期リターン
-        if (node1.Commander.Count < 2 || node1.Soldier.Count <= 0)
+        if (node1.MovePermission && node2.MovePermission)
         {
-            Destroy(movebox.gameObject);
-            return;
+            MoveBox movebox = CreateMovebox(node1, node2);
+
+            // 指揮官が二人未満なら、または兵士がいないなら早期リターン
+            if (node1.Commander.Count < 2 || node1.Soldier.Count <= 0)
+            {
+                Destroy(movebox.gameObject);
+                return;
+            }
+
+            node1.MovePermission = false;
+            node2.MovePermission = false;
+
+            // [移動BOXに指揮官を移動]
+            // インデックス最初のやつを保持
+            Commander firstCommander = node1.Commander[0];
+            // インデックスの最初のやつをリストから一時的に外す
+            node1.Commander.RemoveAt(0);
+            // 相手の指揮官を消して自分の兵士を指揮官させる
+            movebox.Commander.AddRange(node1.Commander);
+            node1.Commander.Clear();
+            // 一旦削除しておいた最初の指揮官を追加しなおす
+            node1.Commander.Add(firstCommander);
+
+            // [移動BOXに兵士を移動]
+            movebox.Soldier.AddRange(node1.Soldier);
+            node1.Soldier.Clear();
+
+            // 指揮官と兵士を自分の子オブジェクトに格納する
+            movebox.Commander.ForEach(c => c.transform.SetParent(movebox.transform));
+            movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
+
+            // 親をNULLに更新
+            movebox.Commander.ForEach(s => s.UpdateNode(null));
+            movebox.Soldier.ForEach(s => s.UpdateNode(null));
         }
-
-        // [移動BOXに指揮官を移動]
-        // インデックス最初のやつを保持
-        Commander firstCommander = node1.Commander[0];
-        // インデックスの最初のやつをリストから一時的に外す
-        node1.Commander.RemoveAt(0);
-        // 相手の指揮官を消して自分の兵士を指揮官させる
-        movebox.Commander.AddRange(node1.Commander);
-        node1.Commander.Clear();
-        // 一旦削除しておいた最初の指揮官を追加しなおす
-        node1.Commander.Add(firstCommander);
-
-        // [移動BOXに兵士を移動]
-        movebox.Soldier.AddRange(node1.Soldier);
-        node1.Soldier.Clear();
-
-        // 指揮官と兵士を自分の子オブジェクトに格納する
-        movebox.Commander.ForEach(c => c.transform.SetParent(movebox.transform));
-        movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
-
-        // 親をNULLに更新
-        movebox.Commander.ForEach(s => s.UpdateNode(null));
-        movebox.Soldier.ForEach(s => s.UpdateNode(null));
     }
 
     void Quit()
@@ -175,6 +185,8 @@ public class Player : MonoBehaviour
         movebox.transform.SetParent(MoveBoxes.transform);
         // 現在選択しているノードに座標を合わせる
         movebox.transform.position = node1.transform.position;
+        // MoveBoxに移動した地点のノードを与える
+        movebox.ParentNode = node1;
         // MoveBoxに移動先のノードの参照を与えて初期化する
         movebox.MoveNode = node2;
         // MoveBoxにSelectNodeのPlayerEnum情報を与える
@@ -197,7 +209,10 @@ public class Player : MonoBehaviour
                 float character_count02 = connect.Commander.Count + connect.Soldier.Count;
                 float combatpower02 = character_count02 * (connect.Commander.Count + 1);
 
-                if (character_count01 > combatpower02) { Attack(node, connect); }
+                //if (character_count01 > combatpower02)
+                {
+                    Attack(node, connect);
+                }
             }
         }
     }
@@ -224,21 +239,25 @@ public class Player : MonoBehaviour
             // 前線以外のノードが、すべて本拠地に向かう
             foreach (var node in map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
             {
+                // 本拠地ならスキップ
+                //if (node == map.PlayerBaseNode[i]) continue;
+                // 違う領土ならスキップ
+                if (node.PlayerEnum != (PlayerEnum)i) continue;
+
+                // 前線のノードならスキップ
+                if (frontNode.Contains(node)) continue;
+
+                // 初期化
                 map.MapNode.ForEach(n => n.PrevNode = null);
                 map.MapNode.ForEach(n => n.Cost = float.MaxValue);
                 map.MapNode.ForEach(n => n.Done = false);
                 rootNode.Clear();
 
-                // 本拠地ならスキップ
-                if (node == map.PlayerBaseNode[i]) continue;
-
-                // 前線のノードならスキップ
-                //if (frontNode.Contains(node)) continue;
-
                 // 接続先の距離を調べる
                 List<Node> openNode = new List<Node>();
 
                 node.Cost = 0;  // 最初のノードのコストは0
+                node.Done = true;
                 Node minCostNode = node;
 
                 int count = 0;
@@ -259,7 +278,7 @@ public class Player : MonoBehaviour
                         if (connectNode == minCostNode.PrevNode) continue;
 
                         // コストを計算して代入
-                        float cost = minCostNode.Cost + (connectNode.transform.position - minCostNode.transform.position).magnitude;
+                        float cost = minCostNode.Cost + Vector3.Distance(connectNode.transform.position, minCostNode.transform.position);
 
                         // コストを更新
                         if (cost < connectNode.Cost)
@@ -278,12 +297,17 @@ public class Player : MonoBehaviour
 
                     // コストが最小のノードを検索
                     minCostNode = openNode.Find(n => n.Cost == (openNode.Min(m => m.Cost)));
+
+                    // 見つからないならbreak
+                    if (minCostNode == null) break;
+
                     // リストから削除する
                     openNode.Remove(minCostNode);
+
                     // 確定ノードにする
                     minCostNode.Done = true;
 
-                    if (minCostNode == map.PlayerBaseNode[i])
+                    if (minCostNode == frontNode[Random.Range(0, frontNode.Count)])
                     {
                         // ゴールまでたどり着いたらPrevNodeを再帰的に遡って取り出していく
                         while (minCostNode.PrevNode != null)
@@ -293,6 +317,9 @@ public class Player : MonoBehaviour
                             // minCostNodeをminCostNode.PrevNodeに更新
                             minCostNode = minCostNode.PrevNode;
                         }
+
+                        //rootNode[0].Normal_Color *= 10;
+                        //rootNode[rootNode.Count - 1].Normal_Color *= 10;
 
                         // リストを反転
                         rootNode.Reverse();

@@ -34,12 +34,15 @@ public class Node : MonoBehaviour
     public float Cost { get; set; } = float.MaxValue;
     public bool Done { get; set; } = false;
     public Node PrevNode { get; set; } = null;
+    public bool MovePermission { get; set; } = true;    // 移動許可
 
     void Start()
     {
         // とりあえずランダムで国を決める
         //PlayerEnum = (PlayerEnum)Random.Range(0, (int)PlayerEnum.Count);
         //UpdateNodeColor();
+
+        MovePermission = true;
 
         Renderer = GetComponent<Renderer>();
         Renderer.material.color = Normal_Color;

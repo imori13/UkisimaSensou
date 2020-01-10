@@ -20,7 +20,7 @@ public class Map : MonoBehaviour
     public List<Road> MapRoad { get; private set; } = new List<Road>();  // 全部の道を格納するリスト
     Vector3 GenerateSize = new Vector3(50, 0, 30);   // 生成範囲
 
-    public static readonly int PlayerCount = 2;
+    public static readonly int PlayerCount = 8;
     public Node[] PlayerBaseNode { get; private set; } = new Node[PlayerCount];   // 各プレイヤーの本拠地
     float[] time = new float[PlayerCount];
     float[] limit = new float[PlayerCount];
@@ -314,13 +314,13 @@ public class Map : MonoBehaviour
             float count = MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count();
             count = Mathf.Clamp(count, countMin, countMax);
 
-            float limitMax = 5;
-            float limitMin = 1;
+            float limitMax = 0.5f;
+            float limitMin = 0.1f;
             // (count-5) / (50-5) => [ 5/50 => 0/45 ] [ 50/50 => 45/45 ]
             float rate = (count - countMin) / (countMax - countMin);
             limit[i] = Mathf.Lerp(limitMax, limitMin, rate);
 
-            Debug.Log("player : " + (PlayerEnum)i + " count : " + count + " limit : " + limit[i]);
+            //Debug.Log("player : " + (PlayerEnum)i + " count : " + count + " limit : " + limit[i]);
 
             if (time[i] >= limit[i])
             {
@@ -333,23 +333,33 @@ public class Map : MonoBehaviour
     void CreateChara(PlayerEnum playerEnum)
     {
         // 指揮官を生成
-        List<Node> list1 = MapNode.Where(n => n.PlayerEnum == playerEnum).ToList();
-        Commander commander = Instantiate(CommanderPrefab).GetComponent<Commander>();
-        Node node1 = list1[Random.Range(0, list1.Count)];
-        node1.Commander.Add(commander);
-        commander.UpdateNode(node1);
+        // 自分の領土かつ、その領土が指揮官５以下なら
+        List<Node> list1 = MapNode.Where(n => (n.PlayerEnum == playerEnum && n.Commander.Count < 5)).ToList();
+        if (list1.Count > 0)
+        {
+            Commander commander = Instantiate(CommanderPrefab).GetComponent<Commander>();
+            Node node1 = list1[Random.Range(0, list1.Count)];
+            node1.Commander.Add(commander);
+            commander.UpdateNode(node1);
+        }
 
         // 兵士を生成
         // 本拠地に一体
-        Soldier soldier1 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
-        PlayerBaseNode[(int)playerEnum].Soldier.Add(soldier1);
-        soldier1.UpdateNode(PlayerBaseNode[(int)playerEnum]);
+        if (PlayerBaseNode[(int)playerEnum].Soldier.Count < 5)
+        {
+            Soldier soldier1 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
+            PlayerBaseNode[(int)playerEnum].Soldier.Add(soldier1);
+            soldier1.UpdateNode(PlayerBaseNode[(int)playerEnum]);
+        }
 
         // 自分の領土ランダムに一体
-        List<Node> list2 = MapNode.Where(n => n.PlayerEnum == playerEnum).ToList();
-        Soldier soldier2 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
-        Node node2 = list2[Random.Range(0, list2.Count)];
-        node2.Soldier.Add(soldier2);
-        soldier2.UpdateNode(node2);
+        List<Node> list2 = MapNode.Where(n => (n.PlayerEnum == playerEnum && n.Soldier.Count < 5)).ToList();
+        if (list2.Count > 0)
+        {
+            Soldier soldier2 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
+            Node node2 = list2[Random.Range(0, list2.Count)];
+            node2.Soldier.Add(soldier2);
+            soldier2.UpdateNode(node2);
+        }
     }
 }

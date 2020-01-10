@@ -5,6 +5,7 @@ using UnityEngine;
 class MoveBox : MonoBehaviour
 {
     public PlayerEnum PlayerEnum { get; set; }
+    public Node ParentNode { get; set; }
     public Node MoveNode { get; set; }
 
     public List<Commander> Commander { get; private set; } = new List<Commander>();
@@ -25,7 +26,7 @@ class MoveBox : MonoBehaviour
         transform.position += direction.normalized * speed * Time.deltaTime;
 
         // ノードに近くなったら終了
-        if (direction.sqrMagnitude <= (0.5f*0.5f))
+        if (direction.sqrMagnitude <= (0.5f * 0.5f))
         {
             Arrival();
             Destroy(gameObject);
@@ -35,6 +36,9 @@ class MoveBox : MonoBehaviour
     // 到着した用メソッド
     void Arrival()
     {
+        ParentNode.MovePermission = true;
+        MoveNode.MovePermission = true;
+
         // 移動先が同じプレイヤーなら移動
         if (MoveNode.PlayerEnum == PlayerEnum)
             Move();
