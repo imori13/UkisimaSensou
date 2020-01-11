@@ -34,15 +34,14 @@ public class Node : MonoBehaviour
     public float Cost { get; set; } = float.MaxValue;
     public bool Done { get; set; } = false;
     public Node PrevNode { get; set; } = null;
-    public bool MovePermission { get; set; } = true;    // 移動許可
+    public List<Node> MovingNode { get; private set; } = new List<Node>();
+
+    // 自分のノードに向かっている敵味方区別しないMoveBoxリスト
+    public List<MoveBox> HeadingNode { get; private set; } = new List<MoveBox>();
 
     void Start()
     {
-        // とりあえずランダムで国を決める
-        //PlayerEnum = (PlayerEnum)Random.Range(0, (int)PlayerEnum.Count);
-        //UpdateNodeColor();
-
-        MovePermission = true;
+        MovingNode = new List<Node>();
 
         Renderer = GetComponent<Renderer>();
         Renderer.material.color = Normal_Color;

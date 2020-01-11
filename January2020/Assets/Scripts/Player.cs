@@ -17,6 +17,9 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        if (selectNode != null)
+            Debug.Log(selectNode.Soldier.Count);
+
         LeftClick();
         RightClick();
         AttackAI();
@@ -26,22 +29,22 @@ public class Player : MonoBehaviour
 
     void Move(Node node1, Node node2)
     {
-        if (node1.MovePermission && node2.MovePermission)
+        if (!node2.MovingNode.Contains(node1))
         {
             MoveBox movebox = CreateMovebox(node1, node2);
 
             // 兵士がいないなら早期リターン、または開いてノードの兵士が一定以上なら移動できない
-            if (node1.Soldier.Count <= 0 || node2.Soldier.Count >= 5)
+            if (node1.Soldier.Count <= 0)
             {
                 Destroy(movebox.gameObject);
                 return;
             }
 
-            node1.MovePermission = false;
-            node2.MovePermission = false;
+            node1.MovingNode.Add(node2);
 
             // [移動BOXに兵士を移動]
-            movebox.Soldier.AddRange(node1.Soldier.Take(node2.Soldier.Count - 5));
+            //movebox.Soldier.AddRange(node1.Soldier.Take(node2.Soldier.Count - 5));
+            movebox.Soldier.AddRange(node1.Soldier);
             node1.Soldier.Clear();
 
             // 兵士を自分の子オブジェクトに格納する
@@ -54,7 +57,7 @@ public class Player : MonoBehaviour
 
     void Attack(Node node1, Node node2)
     {
-        if (node1.MovePermission && node2.MovePermission)
+        if (!node2.MovingNode.Contains(node1))
         {
             MoveBox movebox = CreateMovebox(node1, node2);
 
@@ -65,8 +68,7 @@ public class Player : MonoBehaviour
                 return;
             }
 
-            node1.MovePermission = false;
-            node2.MovePermission = false;
+            node1.MovingNode.Add(node2);
 
             // [移動BOXに指揮官を移動]
             // インデックス最初のやつを保持
@@ -203,13 +205,15 @@ public class Player : MonoBehaviour
             {
                 if (node.PlayerEnum == connect.PlayerEnum) continue;
 
+                if (Random.Range(0, 100) != 0) continue;
+
                 float character_count01 = node.Commander.Count - 1 + node.Soldier.Count;
                 float combatpower01 = character_count01 * (node.Commander.Count + 1 - 1);
 
                 float character_count02 = connect.Commander.Count + connect.Soldier.Count;
                 float combatpower02 = character_count02 * (connect.Commander.Count + 1);
 
-                //if (character_count01 > combatpower02)
+                if (character_count01 > combatpower02)
                 {
                     Attack(node, connect);
                 }
@@ -239,8 +243,8 @@ public class Player : MonoBehaviour
             // 前線以外のノードが、すべて本拠地に向かう
             foreach (var node in map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
             {
-                // 本拠地ならスキップ
-                //if (node == map.PlayerBaseNode[i]) continue;
+                if (Random.Range(0, 100) != 0) continue;
+
                 // 違う領土ならスキップ
                 if (node.PlayerEnum != (PlayerEnum)i) continue;
 
@@ -281,18 +285,18 @@ public class Player : MonoBehaviour
                         float cost = minCostNode.Cost + Vector3.Distance(connectNode.transform.position, minCostNode.transform.position);
 
                         // コストを更新
-                        if (cost < connectNode.Cost)
+                        if (connectNode.Cost == float.MaxValue || cost < connectNode.Cost)
                         {
                             // 小さい方に更新
                             connectNode.Cost = cost;
                             connectNode.PrevNode = minCostNode;
+
+                            // 接続先が前線ならスキップ
+                            if (connectNode.Done) continue;
+
+                            // まだOpenNodeListに追加されていないなら追加
+                            if (!openNode.Contains(connectNode)) openNode.Add(connectNode);
                         }
-
-                        // 接続先が前線ならスキップ
-                        if (connectNode.Done) continue;
-
-                        // まだOpenNodeListに追加されていないなら追加
-                        if (!openNode.Contains(connectNode)) openNode.Add(connectNode);
                     }
 
                     // コストが最小のノードを検索
@@ -307,19 +311,18 @@ public class Player : MonoBehaviour
                     // 確定ノードにする
                     minCostNode.Done = true;
 
+                    // ゴールにたどり着いたら
                     if (minCostNode == frontNode[Random.Range(0, frontNode.Count)])
                     {
-                        // ゴールまでたどり着いたらPrevNodeを再帰的に遡って取り出していく
+                        // ゴールまでの道をPrevNodeを遡って取り出していく
+                        rootNode.Add(minCostNode);
                         while (minCostNode.PrevNode != null)
                         {
                             // リストに追加
-                            rootNode.Add(minCostNode);
+                            rootNode.Add(minCostNode.PrevNode);
                             // minCostNodeをminCostNode.PrevNodeに更新
                             minCostNode = minCostNode.PrevNode;
                         }
-
-                        //rootNode[0].Normal_Color *= 10;
-                        //rootNode[rootNode.Count - 1].Normal_Color *= 10;
 
                         // リストを反転
                         rootNode.Reverse();

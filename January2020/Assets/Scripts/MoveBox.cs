@@ -2,7 +2,7 @@
 using UnityEngine;
 
 // ノード間を移動するときに生成する、移動ボックス
-class MoveBox : MonoBehaviour
+public class MoveBox : MonoBehaviour
 {
     public PlayerEnum PlayerEnum { get; set; }
     public Node ParentNode { get; set; }
@@ -36,8 +36,10 @@ class MoveBox : MonoBehaviour
     // 到着した用メソッド
     void Arrival()
     {
-        ParentNode.MovePermission = true;
-        MoveNode.MovePermission = true;
+        if (ParentNode.MovingNode.Contains(MoveNode))
+        {
+            ParentNode.MovingNode.Remove(MoveNode);
+        }
 
         // 移動先が同じプレイヤーなら移動
         if (MoveNode.PlayerEnum == PlayerEnum)
