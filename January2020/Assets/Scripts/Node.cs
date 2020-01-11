@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Node : MonoBehaviour
@@ -19,6 +20,8 @@ public class Node : MonoBehaviour
 
     public Renderer Renderer { get; private set; }
 
+    // MAPクラス
+    public MapManager Map { get; set; }
     // 繋がっているノードの参照
     public List<Node> ConnectNode { get; private set; } = new List<Node>();
     // 繋がっている道の参照 (マップの生成時に孤立を削除するときに必要)
@@ -34,17 +37,43 @@ public class Node : MonoBehaviour
     public float Cost { get; set; } = float.MaxValue;
     public bool Done { get; set; } = false;
     public Node PrevNode { get; set; } = null;
-    public List<Node> MovingNode { get; private set; } = new List<Node>();
+    public bool MovePermission { get; set; } = true;    // このノードに移動可能か
 
     // 自分のノードに向かっている敵味方区別しないMoveBoxリスト
-    public List<MoveBox> HeadingNode { get; private set; } = new List<MoveBox>();
+    public List<MoveBox> HeadingMovebox { get; private set; } = new List<MoveBox>();
+    public int CommanderCount { get { return Commander.Count + HeadingMovebox.Sum(h => h.Commander.Count()); } }
+    public int SoldierCount { get { return Soldier.Count + HeadingMovebox.Sum(h => h.Soldier.Count()); } }
+    // 本拠地とつながっているかどうか
+    public bool IsConnectMainBase
+    {
+        get
+        {
+            if (PlayerEnum == PlayerEnum.None) return true;
+
+            List<Node> openList = new List<Node> { this };
+            Hoge(ref openList, this);
+            void Hoge(ref List<Node> list, Node node)
+            {
+                foreach (var connect in node.ConnectNode)
+                {
+                    if (list.Contains(connect)) continue;
+                    if (connect.PlayerEnum != PlayerEnum) continue;
+                    openList.Add(connect);
+                    Hoge(ref list, connect);
+                }
+            }
+            return openList.Contains(Map.PlayerBaseNode[(int)PlayerEnum]);
+        }
+    }
 
     void Start()
     {
-        MovingNode = new List<Node>();
+        MovePermission = true;
 
         Renderer = GetComponent<Renderer>();
         Renderer.material.color = Normal_Color;
+
+        if (PlayerEnum == PlayerEnum.None) return;
 
         int[] array1 = new int[] { 0, 20, 50, 40, 30, 20 };
         for (int i = 0; i < MyMath.GetRandomIndex(array1); i++)
@@ -101,13 +130,18 @@ public class Node : MonoBehaviour
             case PlayerEnum.Player03: Normal_Color = PLAYER03_COLOR; break;
             case PlayerEnum.Player04: Normal_Color = Color.yellow; break;
             case PlayerEnum.Player05: Normal_Color = Color.cyan; break;
-            case PlayerEnum.Player06: Normal_Color = new Color(255, 0, 0) / 255f; break;
-            case PlayerEnum.Player07: Normal_Color = Color.black; break;
+            case PlayerEnum.Player06: Normal_Color = new Color(0, 100, 0) / 255f; break;
+            case PlayerEnum.Player07: Normal_Color = new Color(255, 100, 200) / 255f; ; break;
             case PlayerEnum.Player08: Normal_Color = Color.white; break;
-            case PlayerEnum.None: Normal_Color = Color.black; break;
+            case PlayerEnum.None: Normal_Color = Color.gray; break;
         }
 
-        if (IsBaseNode) { Normal_Color *= 2; }
+        if (IsBaseNode) { Normal_Color *= 1.5f; }
+
+        if (!IsConnectMainBase) { Normal_Color = Color.black; }
+
+        if (Renderer == null) { Renderer = GetComponent<Renderer>(); }
+        Renderer.material.color = Normal_Color;
     }
 
     public void Attack(Node node)

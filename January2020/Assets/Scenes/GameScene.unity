@@ -592,8 +592,8 @@ GameObject:
   - component: {fileID: 1712769812}
   - component: {fileID: 1712769811}
   m_Layer: 0
-  m_Name: Map
-  m_TagString: Untagged
+  m_Name: MapManager
+  m_TagString: MapManager
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -646,8 +646,8 @@ GameObject:
   - component: {fileID: 1938765854}
   - component: {fileID: 1938765853}
   m_Layer: 0
-  m_Name: Player
-  m_TagString: Untagged
+  m_Name: GameManager
+  m_TagString: GameManager
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -665,7 +665,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MoveBoxes: {fileID: 107361961}
-  map: {fileID: 1712769811}
+  Map: {fileID: 1712769811}
 --- !u!4 &1938765854
 Transform:
   m_ObjectHideFlags: 0

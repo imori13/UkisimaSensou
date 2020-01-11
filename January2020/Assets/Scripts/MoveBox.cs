@@ -1,17 +1,21 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 // ノード間を移動するときに生成する、移動ボックス
 public class MoveBox : MonoBehaviour
 {
+    public MapManager Map { get; set; }
     public PlayerEnum PlayerEnum { get; set; }
     public Node ParentNode { get; set; }
     public Node MoveNode { get; set; }
 
+    public Node DestinationNode { get; set; } = null;  // 最終的な目的地
+
     public List<Commander> Commander { get; private set; } = new List<Commander>();
     public List<Soldier> Soldier { get; private set; } = new List<Soldier>();
 
-    static readonly float speed = 5f;
+    static readonly float speed = 15f;
 
     void Start()
     {
@@ -36,10 +40,15 @@ public class MoveBox : MonoBehaviour
     // 到着した用メソッド
     void Arrival()
     {
-        if (ParentNode.MovingNode.Contains(MoveNode))
-        {
-            ParentNode.MovingNode.Remove(MoveNode);
-        }
+        // お互いのノードの移動許可フラグを再びONにする
+        ParentNode.MovePermission = true;
+        MoveNode.MovePermission = true;
+
+        // 生成時にMoveBoxの数も足す目的のリストから外す
+        if (ParentNode.HeadingMovebox.Contains(this))
+            ParentNode.HeadingMovebox.Remove(this);
+        if (MoveNode.HeadingMovebox.Contains(this))
+            MoveNode.HeadingMovebox.Remove(this);
 
         // 移動先が同じプレイヤーなら移動
         if (MoveNode.PlayerEnum == PlayerEnum)
@@ -81,11 +90,7 @@ public class MoveBox : MonoBehaviour
         float character_count02 = MoveNode.Commander.Count + MoveNode.Soldier.Count;
         float combatpower02 = character_count02 * (MoveNode.Commander.Count + 1);
 
-
-        Debug.Log(PlayerEnum.ToString() + "戦闘力:" + combatpower01 + " VS " + MoveNode.PlayerEnum.ToString() + "戦闘力:" + combatpower02);
-        Debug.Log((combatpower01 > combatpower02) ? ("侵略成功！") : ("侵略失敗"));
-
-        return (combatpower01 > combatpower02);
+        return (combatpower01 >= combatpower02);
     }
 
     // 勝利時
@@ -106,17 +111,29 @@ public class MoveBox : MonoBehaviour
         MoveNode.Soldier.AddRange(Soldier);
         Soldier.Clear();
 
+        // もし相手のノードが本拠地なら
+        //if (MoveNode.IsBaseNode)
+        //{
+        //    Map.MapNode.Where(a => a.PlayerEnum == MoveNode.PlayerEnum).ToList().ForEach(n =>
+        //    {
+        //        n.Commander.ForEach(c => Destroy(c.gameObject));
+        //        n.Commander.Clear();
+        //        n.Soldier.ForEach(s => Destroy(s.gameObject));
+        //        n.Soldier.Clear();
+        //        n.PlayerEnum = PlayerEnum.None;
+        //        Map.PlayerBaseNode[(int)PlayerEnum] = null;
+        //    });
+        //}
+
         // 相手のノードの占有者を変える
         MoveNode.PlayerEnum = PlayerEnum;
-
-        // ノードの色を更新
-        MoveNode.UpdateNodeColor();
-        MoveNode.Renderer.material.color = MoveNode.Normal_Color;
-        MoveNode.Renderer.material.color += MoveNode.Normal_Color / 4f;
 
         // 親を更新
         MoveNode.Commander.ForEach(c => c.UpdateNode(MoveNode));
         MoveNode.Soldier.ForEach(c => c.UpdateNode(MoveNode));
+
+        // ノードの色をすべて更新
+        Map.AllUpdateNodeColor();
     }
 
     // 敗北時

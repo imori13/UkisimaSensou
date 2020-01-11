@@ -52,4 +52,32 @@ public static class MyMath
 
         return returnValue;
     }
+    
+    /// 円と線分の交差判定
+    public static bool IsLineIntersectedCircle(Vector2 a, Vector2 b, Vector2 p, float radius)
+    {
+        Vector2 ap = p - a;
+        Vector2 ab = b - a;
+        Vector2 bp = p - b;
+        Vector2 normalAB = ab.normalized;
+
+        float lenAX = Vector2.Dot(normalAB, ap);
+
+        float shortestDistance = 0.0f;
+        if (lenAX < 0)
+        {
+            shortestDistance = ap.magnitude;
+        }
+        else if (lenAX > ab.magnitude)
+        {
+            shortestDistance = bp.magnitude;
+        }
+        else
+        {
+            shortestDistance = Mathf.Abs(Vector3.Cross(normalAB, ap).magnitude);
+        }
+
+        Vector2 X = a + ab * lenAX;
+        return shortestDistance < radius;
+    }
 }

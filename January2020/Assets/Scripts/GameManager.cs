@@ -3,11 +3,11 @@ using System.Linq;
 using UnityEngine;
 
 // クリック操作をする操作する側のクラス
-public class Player : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
     [SerializeField] GameObject MoveBoxes;
     Node selectNode;    // 現在選択しているノード
-    [SerializeField] Map map;
+    [SerializeField] MapManager Map;
 
     void Start()
     {
@@ -17,19 +17,20 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (selectNode != null)
-            Debug.Log(selectNode.Soldier.Count);
-
         LeftClick();
         RightClick();
+        Quit();
+    }
+
+    void FixedUpdate()
+    {
         AttackAI();
         MoveAI();
-        Quit();
     }
 
     void Move(Node node1, Node node2)
     {
-        if (!node2.MovingNode.Contains(node1))
+        if (node1.MovePermission && node2.MovePermission)
         {
             MoveBox movebox = CreateMovebox(node1, node2);
 
@@ -40,12 +41,24 @@ public class Player : MonoBehaviour
                 return;
             }
 
-            node1.MovingNode.Add(node2);
+            // お互いのノードの移動許可フラグをOFFにする
+            node1.MovePermission = false;
+            node2.MovePermission = false;
+
+            // Nodeに向かっているMoveBoxを追加するリストにぶち込む(生成時にMoveBoxのキャラ数を足す用のリスト)
+            node1.HeadingMovebox.Add(movebox);
+            node2.HeadingMovebox.Add(movebox);
 
             // [移動BOXに兵士を移動]
-            //movebox.Soldier.AddRange(node1.Soldier.Take(node2.Soldier.Count - 5));
-            movebox.Soldier.AddRange(node1.Soldier);
-            node1.Soldier.Clear();
+            // 移動できる数だけ移動
+            //movebox.Soldier.AddRange(node1.Soldier);
+            //node1.Soldier.Clear();
+            for (int i = 0; i < (5 - node2.Soldier.Count) && i < node1.Soldier.Count; i++)
+            {
+                movebox.Soldier.Add(node1.Soldier[i]);
+            }
+            // 移動先に登録されているものを、元のリストから削除
+            node1.Soldier.RemoveAll(s => movebox.Soldier.Contains(s));
 
             // 兵士を自分の子オブジェクトに格納する
             movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
@@ -57,7 +70,7 @@ public class Player : MonoBehaviour
 
     void Attack(Node node1, Node node2)
     {
-        if (!node2.MovingNode.Contains(node1))
+        if (node1.MovePermission && node2.MovePermission)
         {
             MoveBox movebox = CreateMovebox(node1, node2);
 
@@ -68,7 +81,13 @@ public class Player : MonoBehaviour
                 return;
             }
 
-            node1.MovingNode.Add(node2);
+            // お互いのノードの移動許可フラグをOFFにする
+            node1.MovePermission = false;
+            node2.MovePermission = false;
+
+            // Nodeに向かっているMoveBoxを追加するリストにぶち込む(生成時にMoveBoxのキャラ数を足す用のリスト)
+            node1.HeadingMovebox.Add(movebox);
+            node2.HeadingMovebox.Add(movebox);
 
             // [移動BOXに指揮官を移動]
             // インデックス最初のやつを保持
@@ -193,19 +212,21 @@ public class Player : MonoBehaviour
         movebox.MoveNode = node2;
         // MoveBoxにSelectNodeのPlayerEnum情報を与える
         movebox.PlayerEnum = node1.PlayerEnum;
+        // Mapの参照を与える
+        movebox.Map = Map;
 
         return movebox;
     }
 
     void AttackAI()
     {
-        foreach (var node in map.MapNode)
+        foreach (var node in Map.MapNode)
         {
             foreach (var connect in node.ConnectNode)
             {
                 if (node.PlayerEnum == connect.PlayerEnum) continue;
 
-                if (Random.Range(0, 100) != 0) continue;
+                if (Random.Range(0, 50) != 0) continue;
 
                 float character_count01 = node.Commander.Count - 1 + node.Soldier.Count;
                 float combatpower01 = character_count01 * (node.Commander.Count + 1 - 1);
@@ -213,7 +234,7 @@ public class Player : MonoBehaviour
                 float character_count02 = connect.Commander.Count + connect.Soldier.Count;
                 float combatpower02 = character_count02 * (connect.Commander.Count + 1);
 
-                if (character_count01 > combatpower02)
+                //if (character_count01 >= combatpower02)
                 {
                     Attack(node, connect);
                 }
@@ -223,11 +244,11 @@ public class Player : MonoBehaviour
 
     void MoveAI()
     {
-        for (int i = 0; i < Map.PlayerCount; i++)
+        for (int i = 0; i < MapManager.PlayerCount; i++)
         {
             // 前線を追加
             List<Node> frontNode = new List<Node>();
-            foreach (var node in map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
+            foreach (var node in Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
             {
                 if (node.ConnectNode.Any(c => node.PlayerEnum != c.PlayerEnum))
                 {
@@ -238,12 +259,9 @@ public class Player : MonoBehaviour
                 }
             }
 
-            List<Node> rootNode = new List<Node>();
-
-            // 前線以外のノードが、すべて本拠地に向かう
-            foreach (var node in map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
+            foreach (var node in Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
             {
-                if (Random.Range(0, 100) != 0) continue;
+                if (Random.Range(0, 5) != 0) continue;
 
                 // 違う領土ならスキップ
                 if (node.PlayerEnum != (PlayerEnum)i) continue;
@@ -251,91 +269,97 @@ public class Player : MonoBehaviour
                 // 前線のノードならスキップ
                 if (frontNode.Contains(node)) continue;
 
-                // 初期化
-                map.MapNode.ForEach(n => n.PrevNode = null);
-                map.MapNode.ForEach(n => n.Cost = float.MaxValue);
-                map.MapNode.ForEach(n => n.Done = false);
-                rootNode.Clear();
+                // ルートを検索してリストに格納
+                List<Node> route = SearchRoute(node, frontNode[Random.Range(0, frontNode.Count)]);
 
-                // 接続先の距離を調べる
-                List<Node> openNode = new List<Node>();
-
-                node.Cost = 0;  // 最初のノードのコストは0
-                node.Done = true;
-                Node minCostNode = node;
-
-                int count = 0;
-                while (true)
-                {
-                    count++;
-                    if (count >= 1000)
-                    {
-                        Debug.Log("無限ループっぽいので終了");
-                        break;
-                    }
-
-                    foreach (var connectNode in minCostNode.ConnectNode)
-                    {
-                        // 接続先が違うプレイヤーの領土ならスキップ
-                        if (connectNode.PlayerEnum != minCostNode.PlayerEnum) continue;
-                        // 接続先がMINCOSTNODEの親ならスキップ
-                        if (connectNode == minCostNode.PrevNode) continue;
-
-                        // コストを計算して代入
-                        float cost = minCostNode.Cost + Vector3.Distance(connectNode.transform.position, minCostNode.transform.position);
-
-                        // コストを更新
-                        if (connectNode.Cost == float.MaxValue || cost < connectNode.Cost)
-                        {
-                            // 小さい方に更新
-                            connectNode.Cost = cost;
-                            connectNode.PrevNode = minCostNode;
-
-                            // 接続先が前線ならスキップ
-                            if (connectNode.Done) continue;
-
-                            // まだOpenNodeListに追加されていないなら追加
-                            if (!openNode.Contains(connectNode)) openNode.Add(connectNode);
-                        }
-                    }
-
-                    // コストが最小のノードを検索
-                    minCostNode = openNode.Find(n => n.Cost == (openNode.Min(m => m.Cost)));
-
-                    // 見つからないならbreak
-                    if (minCostNode == null) break;
-
-                    // リストから削除する
-                    openNode.Remove(minCostNode);
-
-                    // 確定ノードにする
-                    minCostNode.Done = true;
-
-                    // ゴールにたどり着いたら
-                    if (minCostNode == frontNode[Random.Range(0, frontNode.Count)])
-                    {
-                        // ゴールまでの道をPrevNodeを遡って取り出していく
-                        rootNode.Add(minCostNode);
-                        while (minCostNode.PrevNode != null)
-                        {
-                            // リストに追加
-                            rootNode.Add(minCostNode.PrevNode);
-                            // minCostNodeをminCostNode.PrevNodeに更新
-                            minCostNode = minCostNode.PrevNode;
-                        }
-
-                        // リストを反転
-                        rootNode.Reverse();
-
-                        if (rootNode.Count > 1)
-                        {
-                            Move(rootNode[0], rootNode[1]);
-                        }
-
-                        break;
-                    }
-                }
+                if (route != null)
+                    Move(node, route[1]);
             }
         }
+    }
+
+    public List<Node> SearchRoute(Node currentNode, Node destNode)
+    {
+        List<Node> rootNode = new List<Node>();
+
+        List<Node> openNode = new List<Node>();
+
+        currentNode.Cost = 0;  // 最初のノードのコストは0
+        currentNode.Done = true;
+        Node minCostNode = currentNode;
+
+        int count = 0;
+        while (true)
+        {
+            count++;
+            if (count >= 1000)
+            {
+                Debug.Log("無限ループっぽいので終了");
+                break;
+            }
+
+            foreach (var connectNode in minCostNode.ConnectNode)
+            {
+                // 接続先が違うプレイヤーの領土ならスキップ
+                if (connectNode.PlayerEnum != minCostNode.PlayerEnum) continue;
+                // 接続先がMINCOSTNODEの親ならスキップ
+                if (connectNode == minCostNode.PrevNode) continue;
+
+                // コストを計算して代入
+                float cost = minCostNode.Cost + Vector3.Distance(connectNode.transform.position, minCostNode.transform.position);
+
+                // コストを更新
+                if (connectNode.Cost == float.MaxValue || cost < connectNode.Cost)
+                {
+                    // 小さい方に更新
+                    connectNode.Cost = cost;
+                    connectNode.PrevNode = minCostNode;
+
+                    // 接続先が前線ならスキップ
+                    if (connectNode.Done) continue;
+
+                    // まだOpenNodeListに追加されていないなら追加
+                    if (!openNode.Contains(connectNode)) openNode.Add(connectNode);
+                }
+            }
+
+            // コストが最小のノードを検索
+            minCostNode = openNode.Find(n => n.Cost == (openNode.Min(m => m.Cost)));
+
+            // 見つからないならbreak
+            if (minCostNode == null) break;
+
+            // リストから削除する
+            openNode.Remove(minCostNode);
+
+            // 確定ノードにする
+            minCostNode.Done = true;
+
+            // ゴールにたどり着いたら
+            if (minCostNode == destNode)
+            {
+                // ゴールまでの道をPrevNodeを遡って取り出していく
+                rootNode.Add(minCostNode);
+                while (minCostNode.PrevNode != null)
+                {
+                    // リストに追加
+                    rootNode.Add(minCostNode.PrevNode);
+                    // minCostNodeをminCostNode.PrevNodeに更新
+                    minCostNode = minCostNode.PrevNode;
+                }
+
+                // リストを反転
+                rootNode.Reverse();
+
+                // 初期化
+                Map.MapNode.ForEach(n => n.PrevNode = null);
+                Map.MapNode.ForEach(n => n.Cost = float.MaxValue);
+                Map.MapNode.ForEach(n => n.Done = false);
+
+                return rootNode;
+            }
+        }
+
+        return null;
     }
 }
