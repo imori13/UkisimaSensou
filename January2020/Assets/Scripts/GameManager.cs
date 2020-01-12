@@ -8,7 +8,6 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] GameObject MoveBoxes;
-    Node selectNode;    // 現在選択しているノード
     [SerializeField] MapManager Map;
 
     [SerializeField] GameObject StartMenu;
@@ -16,13 +15,15 @@ public class GameManager : MonoBehaviour
 
     float time;
 
+    // 現在選択しているノード
+    public Node SelectNode { get; set; }
     // ゲームが開始状態か否か
     public bool IsStart { get; private set; } = false;
 
     void Start()
     {
         // 選択しているノードをnull
-        selectNode = null;
+        SelectNode = null;
         TimerText.gameObject.SetActive(false);
         time = 100;
     }
@@ -44,20 +45,18 @@ public class GameManager : MonoBehaviour
 
     void Move(Node node1, Node node2)
     {
+        if (node1 == node2) { return; }
+
         if (node1.MovePermission && node2.MovePermission)
         {
             MoveBox movebox = CreateMovebox(node1, node2);
 
             // 兵士がいないなら早期リターン、または開いてノードの兵士が一定以上なら移動できない
-            if (node1.Soldier.Count <= 0)
+            if (node1.Soldier.Count <= 0 || node2.Soldier.Count >= 5)
             {
                 Destroy(movebox.gameObject);
                 return;
             }
-
-            // お互いのノードの移動許可フラグをOFFにする
-            node1.MovePermission = false;
-            node2.MovePermission = false;
 
             // Nodeに向かっているMoveBoxを追加するリストにぶち込む(生成時にMoveBoxのキャラ数を足す用のリスト)
             node1.HeadingMovebox.Add(movebox);
@@ -65,8 +64,6 @@ public class GameManager : MonoBehaviour
 
             // [移動BOXに兵士を移動]
             // 移動できる数だけ移動
-            //movebox.Soldier.AddRange(node1.Soldier);
-            //node1.Soldier.Clear();
             for (int i = 0; i < (5 - node2.Soldier.Count) && i < node1.Soldier.Count; i++)
             {
                 movebox.Soldier.Add(node1.Soldier[i]);
@@ -77,6 +74,10 @@ public class GameManager : MonoBehaviour
             // 兵士を自分の子オブジェクトに格納する
             movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
 
+            // お互いのノードの移動許可フラグをOFFにする
+            node1.MovePermission = false;
+            node2.MovePermission = false;
+
             // 親をNULLに更新
             movebox.Soldier.ForEach(s => s.UpdateNode(null));
         }
@@ -84,6 +85,8 @@ public class GameManager : MonoBehaviour
 
     void Attack(Node node1, Node node2)
     {
+        if (node1 == node2) { return; }
+
         if (node1.MovePermission && node2.MovePermission)
         {
             MoveBox movebox = CreateMovebox(node1, node2);
@@ -94,10 +97,6 @@ public class GameManager : MonoBehaviour
                 Destroy(movebox.gameObject);
                 return;
             }
-
-            // お互いのノードの移動許可フラグをOFFにする
-            node1.MovePermission = false;
-            node2.MovePermission = false;
 
             // Nodeに向かっているMoveBoxを追加するリストにぶち込む(生成時にMoveBoxのキャラ数を足す用のリスト)
             node1.HeadingMovebox.Add(movebox);
@@ -121,6 +120,10 @@ public class GameManager : MonoBehaviour
             // 指揮官と兵士を自分の子オブジェクトに格納する
             movebox.Commander.ForEach(c => c.transform.SetParent(movebox.transform));
             movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
+
+            // お互いのノードの移動許可フラグをOFFにする
+            node1.MovePermission = false;
+            node2.MovePermission = false;
 
             // 親をNULLに更新
             movebox.Commander.ForEach(s => s.UpdateNode(null));
@@ -149,17 +152,17 @@ public class GameManager : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             // 前にセレクトしたノードの色を戻す
-            if (selectNode != null)
+            if (SelectNode != null)
             {
-                selectNode.Renderer.material.color = selectNode.Normal_Color;
-                foreach (var a in selectNode.ConnectNode)
+                SelectNode.Renderer.material.color = SelectNode.Normal_Color;
+                foreach (var a in SelectNode.ConnectNode)
                 {
                     a.Renderer.material.color = a.Normal_Color;
                 }
             }
 
             // 一旦選択を解除
-            selectNode = null;
+            SelectNode = null;
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, 500.0f))
@@ -167,13 +170,13 @@ public class GameManager : MonoBehaviour
                 if (hit.collider.tag == "Node")
                 {
                     // 新しく選択したノードの色を変える
-                    selectNode = hit.collider.gameObject.GetComponent<Node>();
-                    selectNode.Renderer.material.color += selectNode.Normal_Color;
-                    foreach (var a in selectNode.ConnectNode)
+                    SelectNode = hit.collider.gameObject.GetComponent<Node>();
+                    SelectNode.Renderer.material.color += SelectNode.Normal_Color;
+                    foreach (var a in SelectNode.ConnectNode)
                     {
                         a.Renderer.material.color += a.Normal_Color / 4f;
                     }
-                    Debug.Log(selectNode.PlayerEnum);
+                    Debug.Log("Move : " + SelectNode.MovePermission + " Commander : " + SelectNode.Commander.Count + " Solder : " + SelectNode.Soldier.Count);
                 }
             }
         }
@@ -188,7 +191,7 @@ public class GameManager : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             // ノードが選択された状態じゃないならスキップ
-            if (selectNode != null)
+            if (SelectNode != null)
             {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 if (Physics.Raycast(ray, out RaycastHit hit, 500.0f))
@@ -198,17 +201,19 @@ public class GameManager : MonoBehaviour
                         Node rightClickNode = hit.collider.GetComponent<Node>();
 
                         // 右クリックで選択したノードが、現在選択しているノードの隣のノードなら
-                        if (selectNode.ConnectNode.Contains(rightClickNode))
+                        if (SelectNode.ConnectNode.Contains(rightClickNode))
                         {
+                            Debug.Log("node1 : " + SelectNode.MovePermission + " node2 : " + rightClickNode.MovePermission);
+
                             // 移動
-                            if (selectNode.PlayerEnum == rightClickNode.PlayerEnum)
+                            if (SelectNode.PlayerEnum == rightClickNode.PlayerEnum)
                             {
-                                Move(selectNode, rightClickNode);
+                                Move(SelectNode, rightClickNode);
                             }
                             // 攻撃
                             else
                             {
-                                Attack(selectNode, rightClickNode);
+                                Attack(SelectNode, rightClickNode);
                             }
                         }
                     }
@@ -228,9 +233,9 @@ public class GameManager : MonoBehaviour
         // 現在選択しているノードに座標を合わせる
         movebox.transform.position = node1.transform.position;
         // MoveBoxに移動した地点のノードを与える
-        movebox.ParentNode = node1;
+        movebox.Node1 = node1;
         // MoveBoxに移動先のノードの参照を与えて初期化する
-        movebox.MoveNode = node2;
+        movebox.Node2 = node2;
         // MoveBoxにSelectNodeのPlayerEnum情報を与える
         movebox.PlayerEnum = node1.PlayerEnum;
         // Mapの参照を与える
@@ -303,10 +308,10 @@ public class GameManager : MonoBehaviour
                 if (frontNode == null) continue;
 
                 // ルートを検索してリストに格納
-                List<Node> route = SearchRoute(node, frontNode[Random.Range(0, frontNode.Count)]);
+                List<Node> route = SearchRoute(node, (frontNode.Count == 1) ? (frontNode[0]) : (frontNode[Random.Range(0, frontNode.Count)]));
 
                 if (route != null)
-                    Move(node, route[1]);
+                    Move(route[0], route[1]);
             }
         }
     }

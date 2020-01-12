@@ -5,8 +5,8 @@ using UnityEngine;
 public class Node : MonoBehaviour
 {
     public static readonly Color PLAYER01_COLOR = new Color(255, 120, 120) / 255f;
-    public static readonly Color PLAYER02_COLOR = new Color(150, 150, 255) / 255f;
-    public static readonly Color PLAYER03_COLOR = new Color(150, 255, 150) / 255f;
+    public static readonly Color PLAYER02_COLOR = new Color(100, 100, 255) / 255f;
+    public static readonly Color PLAYER03_COLOR = new Color(100, 255, 100) / 255f;
     public static readonly Color SELECT_COLOR = Color.white;
     public static readonly Color CONNECT_COLOR = Color.white;
 
@@ -31,6 +31,7 @@ public class Node : MonoBehaviour
     // ノードに属している兵士の参照
     public List<Soldier> Soldier { get; private set; } = new List<Soldier>();
 
+    public GameManager GameManager { get; set; }
     // 本拠地か？
     public bool IsBaseNode { get; set; }
     // ルート検索用コスト
@@ -112,7 +113,7 @@ public class Node : MonoBehaviour
 
         Renderer = GetComponent<Renderer>();
         Renderer.material.color = Normal_Color;
-        
+
         //int[] array1 = new int[] { 0, 20, 50, 40, 30, 20 };
         //for (int i = 0; i < MyMath.GetRandomIndex(array1); i++)
         //{
@@ -175,6 +176,7 @@ public class Node : MonoBehaviour
         }
 
         if (IsBaseNode) { Normal_Color *= 1.5f; }
+        if (GameManager.SelectNode == this) { Normal_Color *= 1.5f; }
 
         if (!IsConnectMainBase) { Normal_Color *= 0.5f; }
 

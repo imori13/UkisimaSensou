@@ -6,7 +6,7 @@ public class CameraController : MonoBehaviour
     Vector3 destVelocity;
 
     static readonly Vector3 clampMinPos = new Vector3(-100, 3, -100);
-    static readonly Vector3 clampMaxPos = new Vector3(100, 40, 100);
+    static readonly Vector3 clampMaxPos = new Vector3(100, 80, 100);
 
     void Start()
     {
@@ -16,7 +16,7 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         float moveSpeed = 0.5f;
-        float updownSpeed = 0.25f;
+        float updownSpeed = 0.75f;
 
         destVelocity = Vector3.zero;
         // 移動処理

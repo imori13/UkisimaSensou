@@ -7,10 +7,8 @@ public class MoveBox : MonoBehaviour
 {
     public MapManager Map { get; set; }
     public PlayerEnum PlayerEnum { get; set; }
-    public Node ParentNode { get; set; }
-    public Node MoveNode { get; set; }
-
-    public Node DestinationNode { get; set; } = null;  // 最終的な目的地
+    public Node Node1 { get; set; }
+    public Node Node2 { get; set; }
 
     public List<Commander> Commander { get; private set; } = new List<Commander>();
     public List<Soldier> Soldier { get; private set; } = new List<Soldier>();
@@ -25,10 +23,10 @@ public class MoveBox : MonoBehaviour
     void FixedUpdate()
     {
         // 線形補完を応用したイージング処理で移動させる
-        transform.position = Vector3.Lerp(transform.position, MoveNode.transform.position, 0.05f);
+        transform.position = Vector3.Lerp(transform.position, Node2.transform.position, 0.05f);
 
         // ノードに近くなったら終了
-        if (Vector3.SqrMagnitude(transform.position - MoveNode.transform.position) <= (0.5f * 0.5f))
+        if (Vector3.SqrMagnitude(transform.position - Node2.transform.position) <= (0.5f * 0.5f))
         {
             Arrival();
             Destroy(gameObject);
@@ -39,17 +37,20 @@ public class MoveBox : MonoBehaviour
     void Arrival()
     {
         // お互いのノードの移動許可フラグを再びONにする
-        ParentNode.MovePermission = true;
-        MoveNode.MovePermission = true;
+        Node1.MovePermission = true;
+        Node2.MovePermission = true;
+
+        Node1.UpdateNodeColor();
+        Node2.UpdateNodeColor();
 
         // 生成時にMoveBoxの数も足す目的のリストから外す
-        if (ParentNode.HeadingMovebox.Contains(this))
-            ParentNode.HeadingMovebox.Remove(this);
-        if (MoveNode.HeadingMovebox.Contains(this))
-            MoveNode.HeadingMovebox.Remove(this);
+        if (Node1.HeadingMovebox.Contains(this))
+            Node1.HeadingMovebox.Remove(this);
+        if (Node2.HeadingMovebox.Contains(this))
+            Node2.HeadingMovebox.Remove(this);
 
         // 移動先が同じプレイヤーなら移動
-        if (MoveNode.PlayerEnum == PlayerEnum)
+        if (Node2.PlayerEnum == PlayerEnum)
             Move();
         // 移動先が違うプレイヤーなら攻撃
         else
@@ -60,15 +61,15 @@ public class MoveBox : MonoBehaviour
     void Move()
     {
         // 指揮官がいた場合にも、移動させる
-        MoveNode.Commander.AddRange(Commander);
+        Node2.Commander.AddRange(Commander);
         Commander.Clear();
         // 兵士を移動させる
-        MoveNode.Soldier.AddRange(Soldier);
+        Node2.Soldier.AddRange(Soldier);
         Soldier.Clear();
 
         // 親を更新
-        MoveNode.Commander.ForEach(c => c.UpdateNode(MoveNode));
-        MoveNode.Soldier.ForEach(c => c.UpdateNode(MoveNode));
+        Node2.Commander.ForEach(c => c.UpdateNode(Node2));
+        Node2.Soldier.ForEach(c => c.UpdateNode(Node2));
     }
 
     // 攻撃
@@ -85,8 +86,8 @@ public class MoveBox : MonoBehaviour
         float character_count01 = Commander.Count + Soldier.Count;
         float combatpower01 = character_count01 * (Commander.Count + 1);
 
-        float character_count02 = MoveNode.Commander.Count + MoveNode.Soldier.Count;
-        float combatpower02 = character_count02 * (MoveNode.Commander.Count + 1);
+        float character_count02 = Node2.Commander.Count + Node2.Soldier.Count;
+        float combatpower02 = character_count02 * (Node2.Commander.Count + 1);
 
         return (combatpower01 >= combatpower02);
     }
@@ -95,11 +96,11 @@ public class MoveBox : MonoBehaviour
     void AttackWin()
     {
         // もし相手のノードが本拠地なら
-        if (MoveNode.IsBaseNode)
+        if (Node2.IsBaseNode)
         {
-            MoveNode.IsBaseNode = false;
-            Map.PlayerBaseNode[(int)MoveNode.PlayerEnum] = null;
-            Map.MapNode.Where(n => n.PlayerEnum == MoveNode.PlayerEnum).ToList().ForEach(n =>
+            Node2.IsBaseNode = false;
+            Map.PlayerBaseNode[(int)Node2.PlayerEnum] = null;
+            Map.MapNode.Where(n => n.PlayerEnum == Node2.PlayerEnum).ToList().ForEach(n =>
             {
                 n.Commander.ForEach(c => Destroy(c.gameObject));
                 n.Commander.Clear();
@@ -111,8 +112,8 @@ public class MoveBox : MonoBehaviour
                     heading = h;
                     Destroy(h.gameObject);
                     n.HeadingMovebox.Remove(h);
-                    h.ParentNode.MovePermission = true;
-                    h.MoveNode.MovePermission = true;
+                    h.Node1.MovePermission = true;
+                    h.Node2.MovePermission = true;
                 });
                 n.ConnectNode.ForEach(c => c.HeadingMovebox.RemoveAll(h => c.HeadingMovebox.Contains(heading)));
                 n.PlayerEnum = PlayerEnum.None;
@@ -120,26 +121,26 @@ public class MoveBox : MonoBehaviour
         }
 
         // 相手の指揮官を消して自分の兵士を指揮官を相手に移動させる
-        MoveNode.Commander.ForEach(c => Destroy(c.gameObject));
-        MoveNode.Commander.Clear();
-        MoveNode.Commander.AddRange(Commander);
+        Node2.Commander.ForEach(c => Destroy(c.gameObject));
+        Node2.Commander.Clear();
+        Node2.Commander.AddRange(Commander);
         Commander.Clear();
 
         // 自分の兵士を１人消す
         Destroy(Soldier[0].gameObject);
         Soldier.RemoveAt(0);
         // 相手の兵士を消して自分の兵士を移動させる
-        MoveNode.Soldier.ForEach(s => Destroy(s.gameObject));
-        MoveNode.Soldier.Clear();
-        MoveNode.Soldier.AddRange(Soldier);
+        Node2.Soldier.ForEach(s => Destroy(s.gameObject));
+        Node2.Soldier.Clear();
+        Node2.Soldier.AddRange(Soldier);
         Soldier.Clear();
 
         // 相手のノードの占有者を変える
-        MoveNode.PlayerEnum = PlayerEnum;
+        Node2.PlayerEnum = PlayerEnum;
 
         // 親を更新
-        MoveNode.Commander.ForEach(c => c.UpdateNode(MoveNode));
-        MoveNode.Soldier.ForEach(c => c.UpdateNode(MoveNode));
+        Node2.Commander.ForEach(c => c.UpdateNode(Node2));
+        Node2.Soldier.ForEach(c => c.UpdateNode(Node2));
 
         // ノードの色をすべて更新
         Map.AllUpdateNodeColor();

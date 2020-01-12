@@ -23,7 +23,7 @@ public class MapManager : MonoBehaviour
     public List<Node> MapNode { get; private set; } = new List<Node>();  // 全ノードを格納するリスト
     public List<Road> MapRoad { get; private set; } = new List<Road>();  // 全部の道を格納するリスト
 
-    Vector3 GenerateSize = new Vector3(80, 0, 40);   // 生成範囲
+    Vector3 GenerateSize = new Vector3(100, 100);   // 生成範囲
     public static readonly int PlayerCount = 8;
     static readonly int CreateNodeCount = 80;
     static readonly int MinPlayerNodeCount = 5;
@@ -84,10 +84,13 @@ public class MapManager : MonoBehaviour
         while (MapNode.Count < CreateNodeCount)
         {
             Node instance = Instantiate(Node);
-            instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.RandomGenerateSize(GenerateSize));
-            float scale = Random.Range(4f, 8f);
+            //instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.RandomGenerateSize(GenerateSize));
+            instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.CircleRandom(75));
+            int[] array = new int[] { 0, 0, 0, 0, 20, 50, 20, 10, 10, 0, 0, 0, 0, 2, 2 };
+            float scale = MyMath.GetRandomIndex(array) + Random.Range(0f, 1f);
             instance.transform.localScale = (new Vector3(1, 0, 1) * scale) + (Vector3.up * instance.transform.localScale.y);
             instance.Scale = scale;
+            instance.GameManager = GameManager;
 
             yield return null;
 
@@ -95,7 +98,7 @@ public class MapManager : MonoBehaviour
             bool flag = false;
             foreach (var node in MapNode)
             {
-                if (Vector3.SqrMagnitude(MyMath.ConversionVector2(instance.transform.position) - MyMath.ConversionVector2(node.transform.position)) <= ((node.Scale + 2) * (node.Scale + 2)) ||
+                if (Vector3.Magnitude(MyMath.ConversionVector2(instance.transform.position) - MyMath.ConversionVector2(node.transform.position)) <= ((instance.Scale + node.Scale + 4) / 2f) ||
                     MapRoad.Any(r => MyMath.IsLineIntersectedCircle(r.PosS, r.PosE, MyMath.ConversionVector2(instance.transform.position), RemoveLineDistance)))
                 {
                     Destroy(instance.gameObject);
@@ -130,7 +133,7 @@ public class MapManager : MonoBehaviour
 
                 Vector3 distance = MapNode[j].transform.position - MapNode[i].transform.position;
                 // 距離が離れすぎているものは橋を繋げない
-                if (Vector3.SqrMagnitude(distance) >= (15 * 15)) { continue; }
+                if (Vector3.SqrMagnitude(distance) >= (17 * 17)) { continue; }
                 // どちらかの道の数が一定以上ならこれ以上は繋げない
                 if (MapNode[j].ConnectNode.Count >= 4 || MapNode[i].ConnectNode.Count >= 4) { continue; }
 
@@ -264,6 +267,47 @@ public class MapManager : MonoBehaviour
             yield return null;
         }
 
+        //// 各プレイヤーランダムに拠点を決める
+        //for (int i = 0; i < PlayerCount; i++)
+        //{
+        //    while (true)
+        //    {
+        //        Node baseNode = MapNode[Random.Range(0, MapNode.Count)];
+
+        //        // すでにそこ誰かの本拠地ならスキップ
+        //        if (baseNode.IsBaseNode) continue;
+        //        // 隣に誰かの本拠地があるならスキップ
+
+        //        List<Node> openList = new List<Node> { baseNode };
+        //        int Num = 0;
+        //        Hoge(ref openList, baseNode, Num);
+        //        void Hoge(ref List<Node> list, Node node, int numm)
+        //        {
+        //            foreach (var connect in node.ConnectNode)
+        //            {
+        //                if (list.Contains(connect)) continue;
+        //                openList.Add(connect);
+        //                numm++;
+        //                if (numm >= 2) { continue; }
+        //                Hoge(ref list, connect, numm);
+        //            }
+        //        }
+
+        //        bool flagg = false;
+        //        PlayerBaseNode.ToList().ForEach(b => { if (openList.Contains(b)) { flagg = true; } });
+        //        if (flagg) continue;
+
+        //        // プレイヤーの本拠地に設定する
+        //        baseNode.PlayerEnum = (PlayerEnum)i;
+        //        baseNode.IsBaseNode = true;
+        //        PlayerBaseNode[i] = baseNode;
+        //        baseNode.UpdateNodeColor();
+        //        yield return null;
+
+        //        break;
+        //    }
+        //}
+
         while (true)
         {
             // 各プレイヤーランダムに拠点を決める
@@ -276,9 +320,6 @@ public class MapManager : MonoBehaviour
                     // すでにそこ誰かの本拠地ならスキップ
                     if (baseNode.IsBaseNode) continue;
                     // 隣に誰かの本拠地があるならスキップ
-                    //bool flag = false;
-                    //PlayerBaseNode.ToList().ForEach(b => { if (baseNode.ConnectNode.Contains(b)) { flag = true; } });
-                    //if (flag) continue;
 
                     List<Node> openList = new List<Node> { baseNode };
                     int Num = 0;
@@ -408,8 +449,8 @@ public class MapManager : MonoBehaviour
             float count = MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count();
             count = Mathf.Clamp(count, countMin, countMax);
 
-            float limitMax = 0.6f;
-            float limitMin = 0.3f;
+            float limitMax = 0.9f;
+            float limitMin = 0.5f;
             // (count-5) / (50-5) => [ 5/50 => 0/45 ] [ 50/50 => 45/45 ]
             float rate = (count - countMin) / (countMax - countMin);
             limit[i] = Mathf.Lerp(limitMax, limitMin, rate);
@@ -443,8 +484,8 @@ public class MapManager : MonoBehaviour
         }
 
         // 兵士を生成
-        // 本拠地に一体
-        for (int i = 0; i < 4; i++)
+        // 本拠地に
+        for (int i = 0; i < 3; i++)
         {
             if (PlayerBaseNode[(int)playerEnum].SoldierCount < 5)
             {
@@ -453,20 +494,21 @@ public class MapManager : MonoBehaviour
                 soldier1.UpdateNode(PlayerBaseNode[(int)playerEnum]);
             }
         }
-        // 自分の領土ランダムに一体
-        List<Node> list2 = MapNode.Where(n =>
-        {
-            // 自分の所属ノードかつ、そのノードのキャラのカウントが一定以下なら
-            return (n.PlayerEnum == playerEnum && n.SoldierCount < 5 && n.IsConnectMainBase);
-        }).ToList();
 
-        if (list2.Count > 0)
-        {
-            Soldier soldier2 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
-            Node node2 = list2[Random.Range(0, list2.Count)];
-            node2.Soldier.Add(soldier2);
-            soldier2.UpdateNode(node2);
-        }
+        //// 自分の領土ランダムに一体
+        //List<Node> list2 = MapNode.Where(n =>
+        //{
+        //    // 自分の所属ノードかつ、そのノードのキャラのカウントが一定以下なら
+        //    return (n.PlayerEnum == playerEnum && n.SoldierCount < 5 && n.IsConnectMainBase);
+        //}).ToList();
+
+        //if (list2.Count > 0)
+        //{
+        //    Soldier soldier2 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
+        //    Node node2 = list2[Random.Range(0, list2.Count)];
+        //    node2.Soldier.Add(soldier2);
+        //    soldier2.UpdateNode(node2);
+        //}
     }
 
     public void AllUpdateNodeColor()
