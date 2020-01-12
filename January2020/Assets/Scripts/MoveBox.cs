@@ -15,22 +15,20 @@ public class MoveBox : MonoBehaviour
     public List<Commander> Commander { get; private set; } = new List<Commander>();
     public List<Soldier> Soldier { get; private set; } = new List<Soldier>();
 
-    static readonly float speed = 15f;
+    static readonly float speed = 5;
 
     void Start()
     {
 
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        // 現在地から目標地への方向を求める
-        Vector3 direction = MoveNode.transform.position - transform.position;
-        // 移動する(方向を正規化してスピードをかけて)
-        transform.position += direction.normalized * speed * Time.deltaTime;
+        // 線形補完を応用したイージング処理で移動させる
+        transform.position = Vector3.Lerp(transform.position, MoveNode.transform.position, 0.05f);
 
         // ノードに近くなったら終了
-        if (direction.sqrMagnitude <= (0.5f * 0.5f))
+        if (Vector3.SqrMagnitude(transform.position - MoveNode.transform.position) <= (0.5f * 0.5f))
         {
             Arrival();
             Destroy(gameObject);
@@ -96,7 +94,32 @@ public class MoveBox : MonoBehaviour
     // 勝利時
     void AttackWin()
     {
-        // 相手の指揮官を消して自分の兵士を指揮官させる
+        // もし相手のノードが本拠地なら
+        if (MoveNode.IsBaseNode)
+        {
+            MoveNode.IsBaseNode = false;
+            Map.PlayerBaseNode[(int)MoveNode.PlayerEnum] = null;
+            Map.MapNode.Where(n => n.PlayerEnum == MoveNode.PlayerEnum).ToList().ForEach(n =>
+            {
+                n.Commander.ForEach(c => Destroy(c.gameObject));
+                n.Commander.Clear();
+                n.Soldier.ForEach(s => Destroy(s.gameObject));
+                n.Soldier.Clear();
+                MoveBox heading = null;
+                n.HeadingMovebox.Where(h => h.PlayerEnum == n.PlayerEnum).ToList().ForEach(h =>
+                {
+                    heading = h;
+                    Destroy(h.gameObject);
+                    n.HeadingMovebox.Remove(h);
+                    h.ParentNode.MovePermission = true;
+                    h.MoveNode.MovePermission = true;
+                });
+                n.ConnectNode.ForEach(c => c.HeadingMovebox.RemoveAll(h => c.HeadingMovebox.Contains(heading)));
+                n.PlayerEnum = PlayerEnum.None;
+            });
+        }
+
+        // 相手の指揮官を消して自分の兵士を指揮官を相手に移動させる
         MoveNode.Commander.ForEach(c => Destroy(c.gameObject));
         MoveNode.Commander.Clear();
         MoveNode.Commander.AddRange(Commander);
@@ -110,20 +133,6 @@ public class MoveBox : MonoBehaviour
         MoveNode.Soldier.Clear();
         MoveNode.Soldier.AddRange(Soldier);
         Soldier.Clear();
-
-        // もし相手のノードが本拠地なら
-        //if (MoveNode.IsBaseNode)
-        //{
-        //    Map.MapNode.Where(a => a.PlayerEnum == MoveNode.PlayerEnum).ToList().ForEach(n =>
-        //    {
-        //        n.Commander.ForEach(c => Destroy(c.gameObject));
-        //        n.Commander.Clear();
-        //        n.Soldier.ForEach(s => Destroy(s.gameObject));
-        //        n.Soldier.Clear();
-        //        n.PlayerEnum = PlayerEnum.None;
-        //        Map.PlayerBaseNode[(int)PlayerEnum] = null;
-        //    });
-        //}
 
         // 相手のノードの占有者を変える
         MoveNode.PlayerEnum = PlayerEnum;

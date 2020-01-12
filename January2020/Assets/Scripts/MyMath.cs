@@ -52,7 +52,7 @@ public static class MyMath
 
         return returnValue;
     }
-    
+
     /// 円と線分の交差判定
     public static bool IsLineIntersectedCircle(Vector2 a, Vector2 b, Vector2 p, float radius)
     {
@@ -79,5 +79,35 @@ public static class MyMath
 
         Vector2 X = a + ab * lenAX;
         return shortestDistance < radius;
+    }
+
+    public static float Vec3ToRad(Vector3 vec3)
+    {
+        return Mathf.Atan2(vec3.z, vec3.x);
+    }
+
+    public static Vector2 RadToVec2(float radian)
+    {
+        return new Vector2(Mathf.Cos(radian), Mathf.Sin(radian));
+    }
+
+    public static Vector3 CircleRandom(float radius)
+    {
+        float direction = Random.Range(0f, 360f);
+        Vector2 vec2 = RadToVec2(direction * Mathf.Deg2Rad);
+        Vector3 vec3 = new Vector3(vec2.x, 0, vec2.y);
+        vec3.Normalize();
+
+        return vec3 * Random.Range(0f, radius);
+    }
+
+    public static Vector3 CircleRandom(float minRadius, float maxRadius)
+    {
+        float direction = Random.Range(0f, 360f);
+        Vector2 vec2 = RadToVec2(direction * Mathf.Deg2Rad);
+        Vector3 vec3 = new Vector3(vec2.x, 0, vec2.y);
+        vec3.Normalize();
+
+        return vec3 * Random.Range(minRadius, maxRadius);
     }
 }

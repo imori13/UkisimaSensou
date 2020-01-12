@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 // クリック操作をする操作する側のクラス
 public class GameManager : MonoBehaviour
@@ -9,10 +11,20 @@ public class GameManager : MonoBehaviour
     Node selectNode;    // 現在選択しているノード
     [SerializeField] MapManager Map;
 
+    [SerializeField] GameObject StartMenu;
+    [SerializeField] Text TimerText;
+
+    float time;
+
+    // ゲームが開始状態か否か
+    public bool IsStart { get; private set; } = false;
+
     void Start()
     {
         // 選択しているノードをnull
         selectNode = null;
+        TimerText.gameObject.SetActive(false);
+        time = 100;
     }
 
     void Update()
@@ -24,6 +36,8 @@ public class GameManager : MonoBehaviour
 
     void FixedUpdate()
     {
+        time -= (IsStart) ? (Time.deltaTime) : (0);
+        TimerText.text = "Time > " + time.ToString("00.00");
         AttackAI();
         MoveAI();
     }
@@ -128,6 +142,9 @@ public class GameManager : MonoBehaviour
 
     void LeftClick()
     {
+        // ゲームがまだ開始してなかったらリターン
+        if (!IsStart) { return; }
+
         // 左クリック
         if (Input.GetMouseButtonDown(0))
         {
@@ -156,6 +173,7 @@ public class GameManager : MonoBehaviour
                     {
                         a.Renderer.material.color += a.Normal_Color / 4f;
                     }
+                    Debug.Log(selectNode.PlayerEnum);
                 }
             }
         }
@@ -163,6 +181,9 @@ public class GameManager : MonoBehaviour
 
     void RightClick()
     {
+        // ゲームがまだ開始してなかったらリターン
+        if (!IsStart) { return; }
+
         // 右クリック
         if (Input.GetMouseButtonDown(1))
         {
@@ -220,10 +241,14 @@ public class GameManager : MonoBehaviour
 
     void AttackAI()
     {
+        // ゲームがまだ開始してなかったらリターン
+        if (!IsStart) { return; }
+
         foreach (var node in Map.MapNode)
         {
             foreach (var connect in node.ConnectNode)
             {
+                //if (node.PlayerEnum == PlayerEnum.Player01) continue;
                 if (node.PlayerEnum == connect.PlayerEnum) continue;
 
                 if (Random.Range(0, 50) != 0) continue;
@@ -244,8 +269,13 @@ public class GameManager : MonoBehaviour
 
     void MoveAI()
     {
+        // ゲームがまだ開始してなかったらリターン
+        if (!IsStart) { return; }
+
         for (int i = 0; i < MapManager.PlayerCount; i++)
         {
+            //if (i == (int)PlayerEnum.Player01) continue;
+
             // 前線を追加
             List<Node> frontNode = new List<Node>();
             foreach (var node in Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
@@ -268,6 +298,9 @@ public class GameManager : MonoBehaviour
 
                 // 前線のノードならスキップ
                 if (frontNode.Contains(node)) continue;
+
+                // 前線のノードが存在しないならスキップ
+                if (frontNode == null) continue;
 
                 // ルートを検索してリストに格納
                 List<Node> route = SearchRoute(node, frontNode[Random.Range(0, frontNode.Count)]);
@@ -361,5 +394,22 @@ public class GameManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    public void GameStart()
+    {
+        StartMenu.SetActive(false);
+        TimerText.gameObject.SetActive(true);
+        StartCoroutine("Initialize");
+    }
+
+    IEnumerator Initialize()
+    {
+        foreach (var node in Map.MapNode)
+        {
+            node.Initialize();
+            yield return null;
+        }
+        IsStart = true;
     }
 }

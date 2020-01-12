@@ -38,6 +38,7 @@ public class Node : MonoBehaviour
     public bool Done { get; set; } = false;
     public Node PrevNode { get; set; } = null;
     public bool MovePermission { get; set; } = true;    // このノードに移動可能か
+    public float Scale { get; set; }    // オブジェクト自体の大きさの直径
 
     // 自分のノードに向かっている敵味方区別しないMoveBoxリスト
     public List<MoveBox> HeadingMovebox { get; private set; } = new List<MoveBox>();
@@ -48,7 +49,7 @@ public class Node : MonoBehaviour
     {
         get
         {
-            if (PlayerEnum == PlayerEnum.None) return true;
+            if (PlayerEnum == PlayerEnum.None) return false;
 
             List<Node> openList = new List<Node> { this };
             Hoge(ref openList, this);
@@ -56,8 +57,9 @@ public class Node : MonoBehaviour
             {
                 foreach (var connect in node.ConnectNode)
                 {
+                    if (PlayerEnum != connect.PlayerEnum) continue;
                     if (list.Contains(connect)) continue;
-                    if (connect.PlayerEnum != PlayerEnum) continue;
+
                     openList.Add(connect);
                     Hoge(ref list, connect);
                 }
@@ -66,40 +68,76 @@ public class Node : MonoBehaviour
         }
     }
 
+    public void Initialize()
+    {
+        if (PlayerEnum == PlayerEnum.None) return;
+
+        Commander commander = Instantiate(CommanderPrefab).GetComponent<Commander>();
+        float scale = transform.localScale.x / 2f;
+        commander.gameObject.transform.position
+            = transform.position
+            + (Vector3.up * 0.5f)
+            + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
+        commander.UpdateNode(this);
+        Commander.Add(commander);
+
+        //if(PlayerEnum == PlayerEnum.Player01)
+        //{
+        //    for(int i = 0; i < 50; i++)
+        //    {
+        //        Commander commander1 = Instantiate(CommanderPrefab).GetComponent<Commander>();
+        //        float scale2 = transform.localScale.x / 2f;
+        //        commander1.gameObject.transform.position
+        //            = transform.position
+        //            + (Vector3.up * 0.5f)
+        //            + (new Vector3(Random.Range(-scale2, scale2), 0, Random.Range(-scale2, scale2)));
+        //        commander1.UpdateNode(this);
+        //        Commander.Add(commander1);
+
+        //        Soldier soldier = Instantiate(SoldierPrefab).GetComponent<Soldier>();
+        //        float scale1 = transform.localScale.x / 2f;
+        //        soldier.gameObject.transform.position
+        //            = transform.position
+        //            + (Vector3.up * 0.5f)
+        //            + (new Vector3(Random.Range(-scale1, scale1), 0, Random.Range(-scale1, scale1)));
+        //        soldier.UpdateNode(this);
+        //        Soldier.Add(soldier);
+        //    }
+        //}
+    }
+
     void Start()
     {
         MovePermission = true;
 
         Renderer = GetComponent<Renderer>();
         Renderer.material.color = Normal_Color;
+        
+        //int[] array1 = new int[] { 0, 20, 50, 40, 30, 20 };
+        //for (int i = 0; i < MyMath.GetRandomIndex(array1); i++)
+        //{
+        //    Commander commander = Instantiate(CommanderPrefab).GetComponent<Commander>();
+        //    float scale = transform.localScale.x / 2f;
+        //    commander.gameObject.transform.position
+        //        = transform.position
+        //        + (Vector3.up * 0.5f)
+        //        + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
+        //    commander.UpdateNode(this);
+        //    Commander.Add(commander);
+        //}
 
-        if (PlayerEnum == PlayerEnum.None) return;
-
-        int[] array1 = new int[] { 0, 20, 50, 40, 30, 20 };
-        for (int i = 0; i < MyMath.GetRandomIndex(array1); i++)
-        {
-            Commander commander = Instantiate(CommanderPrefab).GetComponent<Commander>();
-            float scale = transform.localScale.x / 2f;
-            commander.gameObject.transform.position
-                = transform.position
-                + (Vector3.up * 0.5f)
-                + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
-            commander.UpdateNode(this);
-            Commander.Add(commander);
-        }
-
-        int[] array2 = new int[] { 010, 20, 30, 40, 50, 40, 30, 20, 10 };
-        for (int i = 0; i < MyMath.GetRandomIndex(array2); i++)
-        {
-            Soldier soldier = Instantiate(SoldierPrefab).GetComponent<Soldier>();
-            float scale = transform.localScale.x / 2f;
-            soldier.gameObject.transform.position
-                = transform.position
-                + (Vector3.up * 0.5f)
-                + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
-            soldier.UpdateNode(this);
-            Soldier.Add(soldier);
-        }
+        //int[] array2 = new int[] { 010, 20, 30, 40, 50, 40, 30, 20, 10 };
+        //for (int i = 0; i < MyMath.GetRandomIndex(array2); i++)
+        //{
+        //    Soldier soldier = Instantiate(SoldierPrefab).GetComponent<Soldier>();
+        //    float scale = transform.localScale.x / 2f;
+        //    soldier.gameObject.transform.position
+        //        = transform.position
+        //        + (Vector3.up * 0.5f)
+        //        + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
+        //    soldier.UpdateNode(this);
+        //    Soldier.Add(soldier);
+        //}
     }
 
     void Update()
@@ -138,7 +176,7 @@ public class Node : MonoBehaviour
 
         if (IsBaseNode) { Normal_Color *= 1.5f; }
 
-        if (!IsConnectMainBase) { Normal_Color = Color.black; }
+        if (!IsConnectMainBase) { Normal_Color *= 0.5f; }
 
         if (Renderer == null) { Renderer = GetComponent<Renderer>(); }
         Renderer.material.color = Normal_Color;
