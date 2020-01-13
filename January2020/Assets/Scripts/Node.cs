@@ -4,21 +4,20 @@ using UnityEngine;
 
 public class Node : MonoBehaviour
 {
-    public static readonly Color PLAYER01_COLOR = new Color(255, 120, 120) / 255f;
-    public static readonly Color PLAYER02_COLOR = new Color(100, 100, 255) / 255f;
-    public static readonly Color PLAYER03_COLOR = new Color(100, 255, 100) / 255f;
-    public static readonly Color SELECT_COLOR = Color.white;
-    public static readonly Color CONNECT_COLOR = Color.white;
-
-
     // prefab
     [SerializeField] GameObject CommanderPrefab;
     [SerializeField] GameObject SoldierPrefab;
+
+    [SerializeField] Mesh Player01Mesh;
+    [SerializeField] Material Player01Material;
+    [SerializeField] Mesh Player02Mesh;
+    [SerializeField] Material Player02Material;
 
     public Color Normal_Color { get; set; }   // 国ごとの通常色
     public PlayerEnum PlayerEnum { get; set; } = PlayerEnum.None;
 
     public Renderer Renderer { get; private set; }
+    public MeshFilter MeshFilter { get; private set; }
 
     // MAPクラス
     public MapManager Map { get; set; }
@@ -162,25 +161,48 @@ public class Node : MonoBehaviour
 
     public void UpdateNodeColor()
     {
+        if (Renderer == null) { Renderer = GetComponent<Renderer>(); }
+        if (MeshFilter == null) { MeshFilter = GetComponent<MeshFilter>(); }
         switch (PlayerEnum)
         {
-            case PlayerEnum.Player01: Normal_Color = PLAYER01_COLOR; break;
-            case PlayerEnum.Player02: Normal_Color = PLAYER02_COLOR; break;
-            case PlayerEnum.Player03: Normal_Color = PLAYER03_COLOR; break;
-            case PlayerEnum.Player04: Normal_Color = Color.yellow; break;
-            case PlayerEnum.Player05: Normal_Color = Color.cyan; break;
-            case PlayerEnum.Player06: Normal_Color = new Color(0, 100, 0) / 255f; break;
-            case PlayerEnum.Player07: Normal_Color = new Color(255, 100, 200) / 255f; ; break;
-            case PlayerEnum.Player08: Normal_Color = Color.white; break;
-            case PlayerEnum.None: Normal_Color = Color.gray; break;
+            case PlayerEnum.Player01:
+                MeshFilter.mesh = Player01Mesh;
+                Renderer.material = Player01Material;
+                Normal_Color = Color.white;
+                break;
+            case PlayerEnum.Player02:
+                MeshFilter.mesh = Player02Mesh;
+                Renderer.material = Player02Material;
+                Normal_Color = Color.white;
+                break;
+            case PlayerEnum.Player03:
+                MeshFilter.mesh = Player02Mesh;
+                Renderer.material = Player02Material;
+                Normal_Color = new Color(0.3f, 0.3f, 1.0f);
+                break;
+            case PlayerEnum.Player04:
+                MeshFilter.mesh = Player02Mesh;
+                Renderer.material = Player02Material;
+                Normal_Color = Color.green;
+                break;
+            case PlayerEnum.Player05:
+                break;
+            case PlayerEnum.Player06:
+                break;
+            case PlayerEnum.Player07:
+                break;
+            case PlayerEnum.Player08:
+                break;
+            case PlayerEnum.None:
+                MeshFilter.mesh = Player01Mesh;
+                Renderer.material = Player01Material;
+                Normal_Color = Color.gray;
+                break;
         }
 
         if (IsBaseNode) { Normal_Color *= 1.5f; }
         if (GameManager.SelectNode == this) { Normal_Color *= 1.5f; }
 
-        if (!IsConnectMainBase) { Normal_Color *= 0.5f; }
-
-        if (Renderer == null) { Renderer = GetComponent<Renderer>(); }
         Renderer.material.color = Normal_Color;
     }
 

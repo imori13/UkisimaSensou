@@ -24,8 +24,8 @@ public class MapManager : MonoBehaviour
     public List<Road> MapRoad { get; private set; } = new List<Road>();  // 全部の道を格納するリスト
 
     Vector3 GenerateSize = new Vector3(100, 100);   // 生成範囲
-    public static readonly int PlayerCount = 8;
-    static readonly int CreateNodeCount = 80;
+    public static readonly int PlayerCount = 4;
+    static readonly int CreateNodeCount = 60;
     static readonly int MinPlayerNodeCount = 5;
     static readonly int RemoveLineDistance = 5;
 
@@ -85,10 +85,11 @@ public class MapManager : MonoBehaviour
         {
             Node instance = Instantiate(Node);
             //instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.RandomGenerateSize(GenerateSize));
-            instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.CircleRandom(75));
-            int[] array = new int[] { 0, 0, 0, 0, 20, 50, 20, 10, 10, 0, 0, 0, 0, 2, 2 };
+            instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.CircleRandom(60));
+            int[] array = new int[] { 0, 0, 0, 0, 0, 10, 20, 50, 20, 10, 10, 0, 0, 0, 0, 2, 2 };
             float scale = MyMath.GetRandomIndex(array) + Random.Range(0f, 1f);
-            instance.transform.localScale = (new Vector3(1, 0, 1) * scale) + (Vector3.up * instance.transform.localScale.y);
+            instance.transform.localScale = (new Vector3(1, 1, 1) * scale * 0.3f);
+            instance.transform.Rotate(0, Random.Range(0f, 360f), 0);
             instance.Scale = scale;
             instance.GameManager = GameManager;
 
@@ -140,8 +141,9 @@ public class MapManager : MonoBehaviour
                 // 橋を生成
                 Road road = Instantiate(Road).GetComponent<Road>();
                 road.transform.rotation = Quaternion.LookRotation(distance, Vector3.up);
-                road.transform.position = (MapNode[i].transform.position) + (road.transform.forward * distance.magnitude / 2f);
-                road.transform.localScale = new Vector3(road.transform.localScale.x, 0.1f, distance.magnitude);
+                road.transform.position = (MapNode[i].transform.position + distance.normalized * (MapNode[i].Scale + 2) * 0.33f);
+                Vector3 aite = (MapNode[j].transform.position - distance.normalized * (MapNode[j].Scale + 2) * 0.33f);
+                road.transform.localScale = new Vector3(road.transform.localScale.x, 1f, (road.transform.position - aite).magnitude * 0.33f);
                 road.transform.SetParent(Roads.transform);
                 road.StartNode = MapNode[i];
                 road.EndNode = MapNode[j];

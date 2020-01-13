@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
         // 選択しているノードをnull
         SelectNode = null;
         TimerText.gameObject.SetActive(false);
-        time = 100;
+        time = 10;
     }
 
     void Update()
@@ -416,5 +416,15 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
         IsStart = true;
+    }
+
+    void Timer()
+    {
+
+    }
+
+    void FinishGame()
+    {
+
     }
 }
