@@ -23,13 +23,13 @@ public class MapManager : MonoBehaviour
     public List<Node> MapNode { get; private set; } = new List<Node>();  // 全ノードを格納するリスト
     public List<Road> MapRoad { get; private set; } = new List<Road>();  // 全部の道を格納するリスト
 
-    Vector3 GenerateSize = new Vector3(100, 100);   // 生成範囲
+    static float GenerateSize = 70;
     public static readonly int PlayerCount = 4;
-    static readonly int CreateNodeCount = 60;
+    static readonly int CreateNodeCount = 75;
     static readonly int MinPlayerNodeCount = 5;
     static readonly int RemoveLineDistance = 5;
 
-    public Node[] PlayerBaseNode { get; private set; } = new Node[PlayerCount];   // 各プレイヤーの本拠地
+    public List<Node> PlayerBaseNode { get; private set; } = new List<Node>();  // 各プレイヤーの本拠地
     float[] time = new float[PlayerCount];
     float[] limit = new float[PlayerCount];
 
@@ -55,23 +55,54 @@ public class MapManager : MonoBehaviour
     {
         StartButton.interactable = false;
         GenerateButton.interactable = false;
+
         StartCoroutine("Initialize");
     }
 
     IEnumerator Initialize()
     {
+        int count = 0;
         foreach (var road in MapRoad)
         {
+            count++;
+            if (count >= 3) { count = 0; yield return null; }
             Destroy(road.gameObject);
-            yield return null;
         }
         MapRoad.Clear();
+
+        count = 0;
         foreach (var node in MapNode)
         {
+            count++;
+            if (count >= 3) { count = 0; yield return null; }
             Destroy(node.gameObject);
-            yield return null;
         }
         MapNode.Clear();
+        PlayerBaseNode.Clear();
+
+        // 本拠地を生成
+        for (int i = 0; i < PlayerCount; i++)
+        {
+            Node instance = Instantiate(Node);
+
+            float f = i / (float)PlayerCount;
+            float rad = Random.Range(-20f, 20f) + 360f * f * Mathf.Deg2Rad;
+            Vector3 vec3 = new Vector3(Mathf.Cos(rad), 0, Mathf.Sin(rad));
+            vec3 *= Random.Range(40f, 70f);
+
+            instance.transform.position = vec3;
+
+            float scale = Random.Range(14f, 16f);
+            instance.transform.localScale = (new Vector3(1, 1, 1) * scale * 0.3f);
+            instance.Scale = scale;
+            instance.GameManager = GameManager;
+
+            PlayerBaseNode.Add(instance);
+            MapNode.Add(instance);
+            instance.transform.SetParent(Nodes.transform);
+            instance.IsBaseNode = true;
+            instance.Map = this;
+        }
 
         StartCoroutine("CreateNodes");
         yield break;
@@ -80,12 +111,21 @@ public class MapManager : MonoBehaviour
     // ノードを作成
     IEnumerator CreateNodes()
     {
+        int count = 0;
+
+        // もうすでに一定の数生成されてたら
+        if (MapNode.Count >= CreateNodeCount)
+        {
+            StartCoroutine("Initialize");
+            yield break;
+        }
+
         // ノードを作成
         while (MapNode.Count < CreateNodeCount)
         {
             Node instance = Instantiate(Node);
             //instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.RandomGenerateSize(GenerateSize));
-            instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.CircleRandom(60));
+            instance.transform.position = (MapNode.Count <= PlayerCount) ? (Vector3.zero) : (MyMath.CircleRandom(GenerateSize));
             int[] array = new int[] { 0, 0, 0, 0, 0, 10, 20, 50, 20, 10, 10, 0, 0, 0, 0, 2, 2 };
             float scale = MyMath.GetRandomIndex(array) + Random.Range(0f, 1f);
             instance.transform.localScale = (new Vector3(1, 1, 1) * scale * 0.3f);
@@ -93,7 +133,8 @@ public class MapManager : MonoBehaviour
             instance.Scale = scale;
             instance.GameManager = GameManager;
 
-            yield return null;
+            count++;
+            if (count >= 10) { count = 0; yield return null; }
 
             // すでに追加されているノードと比べてどれか近かったら追加しない
             bool flag = false;
@@ -109,10 +150,12 @@ public class MapManager : MonoBehaviour
             }
             if (flag) { continue; }
 
-            yield return null;
-
             // 他ノードと近くなければ追加
-            MapNode.Add(instance);
+            if (MapNode.All(n => PlayerBaseNode.Contains(n)))
+                MapNode.Insert(0, instance);
+            else
+                MapNode.Add(instance);
+
             instance.transform.SetParent(Nodes.transform);
             instance.Map = this;
         }
@@ -124,6 +167,8 @@ public class MapManager : MonoBehaviour
     // ノードをつなげる道を作成
     IEnumerator CreateRoads()
     {
+        int count = 0;
+
         // 橋を作成
         for (int i = 0; i < MapNode.Count; i++)
         {
@@ -134,9 +179,15 @@ public class MapManager : MonoBehaviour
 
                 Vector3 distance = MapNode[j].transform.position - MapNode[i].transform.position;
                 // 距離が離れすぎているものは橋を繋げない
-                if (Vector3.SqrMagnitude(distance) >= (17 * 17)) { continue; }
+                if (Vector3.SqrMagnitude(distance) >= (21 * 21)) { continue; }
                 // どちらかの道の数が一定以上ならこれ以上は繋げない
                 if (MapNode[j].ConnectNode.Count >= 4 || MapNode[i].ConnectNode.Count >= 4) { continue; }
+                // すでにその場所に道をつなげていたらスキップ
+                if (MapNode[i].ConnectNode.Any(n => n == MapNode[j]) || MapNode[j].ConnectNode.Any(n => n == MapNode[i])) continue;
+                // 本拠地かつ、それがどれかと接続されていたら
+                if ((MapNode[i].IsBaseNode && MapNode[i].ConnectRoad.Count() >= 1) || (MapNode[j].IsBaseNode && MapNode[j].ConnectRoad.Count() >= 1)) continue;
+                // 本拠地と本拠地同士は繋げないので、スキップ
+                if (MapNode[i].IsBaseNode && MapNode[j].IsBaseNode) continue;
 
                 // 橋を生成
                 Road road = Instantiate(Road).GetComponent<Road>();
@@ -150,7 +201,8 @@ public class MapManager : MonoBehaviour
                 road.PosS = MyMath.ConversionVector2(MapNode[i].transform.position);
                 road.PosE = MyMath.ConversionVector2(MapNode[j].transform.position);
 
-                yield return null;
+                count++;
+                if (count >= 3) { count = 0; yield return null; }
 
                 // すでにある道と交差していたら、スキップ
                 bool flag1 = false;
@@ -164,8 +216,6 @@ public class MapManager : MonoBehaviour
                     }
                 }
                 if (flag1) continue;
-
-                yield return null;
 
                 // 始点ノードと終点ノードとは違う他ノードと線が衝突していたら、削除
                 bool flag2 = false;
@@ -182,8 +232,6 @@ public class MapManager : MonoBehaviour
                     break;
                 }
                 if (flag2) continue;
-
-                yield return null;
 
                 // 重なっていないなら追加
                 MapRoad.Add(road);
@@ -217,21 +265,31 @@ public class MapManager : MonoBehaviour
         {
             if (!OpenList.Contains(node))
             {
+
+                if (node.IsBaseNode)
+                {
+                    node.ConnectNode.Clear();
+                    node.ConnectRoad.Clear();
+                }
                 // 消すノードの繋がっている道の削除フラグを立てる
-                node.ConnectRoad.ForEach(r => { r.RemoveFlag = true; });
-                Destroy(node.gameObject);
+                else
+                {
+                    node.ConnectRoad.ForEach(r => { r.RemoveFlag = true; });
+                    Destroy(node.gameObject);
+                }
 
                 yield return null;
             }
         }
-        MapNode.RemoveAll(m => !OpenList.Contains(m));
+
+        MapNode.RemoveAll(n => (!OpenList.Contains(n) && !n.IsBaseNode));
 
         // 孤立した道を削除
-        MapRoad.ForEach(m => { if (m.RemoveFlag) { Destroy(m.gameObject); } });
+        MapRoad.ForEach(r => { if (r.RemoveFlag) { Destroy(r.gameObject); } });
         MapRoad.RemoveAll(m => m.RemoveFlag);
 
         // もう一度処理を行う
-        if (MapNode.Count < CreateNodeCount)
+        if (PlayerBaseNode.Any(n => n.ConnectRoad.Count() <= 0) || MapNode.Count < CreateNodeCount)
         {
             StartCoroutine("CreateNodes");
         }
@@ -274,7 +332,17 @@ public class MapManager : MonoBehaviour
         //{
         //    while (true)
         //    {
-        //        Node baseNode = MapNode[Random.Range(0, MapNode.Count)];
+
+        //// 接続数が1のやつを本拠地として選ぶ
+        //var ConnectOneNode = MapNode.Where(n => n.ConnectNode.Count == 1).ToArray();
+        //// 接続数が１のやつがプレイヤーの数よりも少なかったらもう一度マップを生成するところから
+        //if (ConnectOneNode.Count() < PlayerCount)
+        //{
+        //    StartCoroutine("Initialize");
+        //    yield break;
+        //}
+
+        //Node baseNode = ConnectOneNode[Random.Range(0, ConnectOneNode.Count())];
 
         //        // すでにそこ誰かの本拠地ならスキップ
         //        if (baseNode.IsBaseNode) continue;
@@ -315,42 +383,14 @@ public class MapManager : MonoBehaviour
             // 各プレイヤーランダムに拠点を決める
             for (int i = 0; i < PlayerCount; i++)
             {
-                while (true)
-                {
-                    Node baseNode = MapNode[Random.Range(0, MapNode.Count)];
+                Node node = PlayerBaseNode[Random.Range(0, PlayerBaseNode.Count())];
 
-                    // すでにそこ誰かの本拠地ならスキップ
-                    if (baseNode.IsBaseNode) continue;
-                    // 隣に誰かの本拠地があるならスキップ
+                // すでにそこ誰かの本拠地ならスキップ
+                if (node.IsBaseNode) continue;
 
-                    List<Node> openList = new List<Node> { baseNode };
-                    int Num = 0;
-                    Hoge(ref openList, baseNode, Num);
-                    void Hoge(ref List<Node> list, Node node, int numm)
-                    {
-                        foreach (var connect in node.ConnectNode)
-                        {
-                            if (list.Contains(connect)) continue;
-                            openList.Add(connect);
-                            numm++;
-                            if (numm >= 2) { continue; }
-                            Hoge(ref list, connect, numm);
-                        }
-                    }
-
-                    bool flagg = false;
-                    PlayerBaseNode.ToList().ForEach(b => { if (openList.Contains(b)) { flagg = true; } });
-                    if (flagg) continue;
-
-                    // プレイヤーの本拠地に設定する
-                    baseNode.PlayerEnum = (PlayerEnum)i;
-                    baseNode.IsBaseNode = true;
-                    PlayerBaseNode[i] = baseNode;
-                    baseNode.UpdateNodeColor();
-                    yield return null;
-
-                    break;
-                }
+                // プレイヤーの本拠地に設定する
+                node.PlayerEnum = (PlayerEnum)i;
+                node.UpdateNodeColor();
             }
 
             List<Node>[] openNode = new List<Node>[PlayerCount];
@@ -417,12 +457,7 @@ public class MapManager : MonoBehaviour
                 {
                     // 所属を初期化
                     flag = true;
-                    MapNode.ForEach(n => n.PlayerEnum = PlayerEnum.None);
-                    for (int j = 0; j < PlayerCount; j++)
-                    {
-                        PlayerBaseNode[j].IsBaseNode = false;
-                        PlayerBaseNode[j] = null;
-                    }
+                    MapNode.Where(n => !PlayerBaseNode.Contains(n)).ToList().ForEach(n => n.PlayerEnum = PlayerEnum.None);
                     break;
                 }
             }

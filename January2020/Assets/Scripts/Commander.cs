@@ -37,7 +37,7 @@ public class Commander : MonoBehaviour
         transform.SetParent(ParentNode.transform);
 
         // 座標を更新
-        DestPosition = (Vector3.up * 0.5f) + (MyMath.CircleRandom(0.1f,0.2f));
+        DestPosition = (MyMath.CircleRandom(0.1f, 0.2f));
         transform.position = ParentNode.transform.position + DestPosition;
     }
 }

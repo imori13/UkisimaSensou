@@ -37,7 +37,7 @@ public class Soldier : MonoBehaviour
         transform.SetParent(ParentNode.transform);
 
         // 座標を更新
-        DestPosition = (Vector3.up * 0.5f) + (MyMath.CircleRandom(0.3f, 0.45f));
+        DestPosition = (MyMath.CircleRandom(0.3f, 0.45f));
         transform.position = ParentNode.transform.position + DestPosition;
     }
 }

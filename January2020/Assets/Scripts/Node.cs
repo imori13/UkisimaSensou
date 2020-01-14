@@ -9,15 +9,23 @@ public class Node : MonoBehaviour
     [SerializeField] GameObject SoldierPrefab;
 
     [SerializeField] Mesh Player01Mesh;
+    [SerializeField] Mesh Player01Base;
+    [SerializeField] Mesh Player01Tower;
     [SerializeField] Material Player01Material;
+    [SerializeField] Material Player01BaseMaterial;
+    [SerializeField] Material Player01TowerMaterial;
     [SerializeField] Mesh Player02Mesh;
+    [SerializeField] Mesh Player02Base;
+    [SerializeField] Mesh Player02Tower;
     [SerializeField] Material Player02Material;
+    [SerializeField] Material Player02BaseMaterial;
+    [SerializeField] Material Player02TowerMaterial;
 
     public Color Normal_Color { get; set; }   // 国ごとの通常色
     public PlayerEnum PlayerEnum { get; set; } = PlayerEnum.None;
 
-    public Renderer Renderer { get; private set; }
     public MeshFilter MeshFilter { get; private set; }
+    public MeshRenderer MeshRenderer { get; private set; }
 
     // MAPクラス
     public MapManager Map { get; set; }
@@ -33,6 +41,8 @@ public class Node : MonoBehaviour
     public GameManager GameManager { get; set; }
     // 本拠地か？
     public bool IsBaseNode { get; set; }
+    // 本拠地用モデル
+    GameObject Tower = null;
     // ルート検索用コスト
     public float Cost { get; set; } = float.MaxValue;
     public bool Done { get; set; } = false;
@@ -110,8 +120,9 @@ public class Node : MonoBehaviour
     {
         MovePermission = true;
 
-        Renderer = GetComponent<Renderer>();
-        Renderer.material.color = Normal_Color;
+        MeshRenderer = GetComponent<MeshRenderer>();
+        MeshFilter = GetComponent<MeshFilter>();
+        MeshRenderer.material.color = Normal_Color;
 
         //int[] array1 = new int[] { 0, 20, 50, 40, 30, 20 };
         //for (int i = 0; i < MyMath.GetRandomIndex(array1); i++)
@@ -159,30 +170,65 @@ public class Node : MonoBehaviour
         return flag;
     }
 
+    GameObject CreateTower(Mesh mesh, Material material)
+    {
+        GameObject instance = new GameObject("Tower");
+        instance.transform.SetParent(transform);
+        instance.transform.position = transform.position;
+        instance.transform.localScale = Vector3.one * 0.5f;
+        instance.transform.Rotate(0, Random.Range(0, 360f), 0);
+        instance.AddComponent<MeshFilter>().mesh = Player01Tower;
+        instance.AddComponent<MeshRenderer>().material = Player01TowerMaterial;
+
+        return instance;
+    }
+
     public void UpdateNodeColor()
     {
-        if (Renderer == null) { Renderer = GetComponent<Renderer>(); }
+        if (MeshRenderer == null) { MeshRenderer = GetComponent<MeshRenderer>(); }
         if (MeshFilter == null) { MeshFilter = GetComponent<MeshFilter>(); }
         switch (PlayerEnum)
         {
             case PlayerEnum.Player01:
-                MeshFilter.mesh = Player01Mesh;
-                Renderer.material = Player01Material;
+                if (IsBaseNode)
+                {
+                    Tower = CreateTower(Player01Tower, Player01TowerMaterial);
+                    MeshFilter.mesh = Player01Base;
+                    MeshRenderer.material = Player01BaseMaterial;
+                }
+                else
+                {
+                    MeshFilter.mesh = Player01Mesh;
+                    MeshRenderer.material = Player01Material;
+                }
                 Normal_Color = Color.white;
                 break;
             case PlayerEnum.Player02:
-                MeshFilter.mesh = Player02Mesh;
-                Renderer.material = Player02Material;
+                if (IsBaseNode)
+                {
+                    Tower = CreateTower(Player02Tower, Player02TowerMaterial);
+                    MeshFilter.mesh = Player02Base;
+                    MeshRenderer.material = Player02BaseMaterial;
+                }
+                else
+                {
+                    MeshFilter.mesh = Player02Mesh;
+                    MeshRenderer.material = Player02Material;
+                }
                 Normal_Color = Color.white;
                 break;
             case PlayerEnum.Player03:
+                if (IsBaseNode)
+                    Tower = CreateTower(Player01Base, Player01BaseMaterial);
                 MeshFilter.mesh = Player02Mesh;
-                Renderer.material = Player02Material;
+                MeshRenderer.material = Player02Material;
                 Normal_Color = new Color(0.3f, 0.3f, 1.0f);
                 break;
             case PlayerEnum.Player04:
+                if (IsBaseNode)
+                    Tower = CreateTower(Player02Base, Player02BaseMaterial);
                 MeshFilter.mesh = Player02Mesh;
-                Renderer.material = Player02Material;
+                MeshRenderer.material = Player02Material;
                 Normal_Color = Color.green;
                 break;
             case PlayerEnum.Player05:
@@ -195,15 +241,25 @@ public class Node : MonoBehaviour
                 break;
             case PlayerEnum.None:
                 MeshFilter.mesh = Player01Mesh;
-                Renderer.material = Player01Material;
+                MeshRenderer.material = Player01Material;
                 Normal_Color = Color.gray;
                 break;
         }
 
-        if (IsBaseNode) { Normal_Color *= 1.5f; }
-        if (GameManager.SelectNode == this) { Normal_Color *= 1.5f; }
+        if (IsBaseNode)
+        {
+            Vector3 vec3 = (ConnectNode[0].transform.position - transform.position);
+            vec3.y = 0;
+            transform.rotation = Quaternion.LookRotation(vec3, Vector3.up);
+        }
 
-        Renderer.material.color = Normal_Color;
+        if (GameManager != null && GameManager.SelectNode != null)
+        {
+            if (GameManager.SelectNode == this || GameManager.SelectNode.ConnectNode.Contains(this)) { Normal_Color *= 1.5f; }
+        }
+        if (!IsBaseNode && Tower != null) { Destroy(Tower.gameObject); }
+
+        MeshRenderer.material.color = Normal_Color;
     }
 
     public void Attack(Node node)
@@ -273,8 +329,8 @@ public class Node : MonoBehaviour
         // ノードの色を更新
         node.UpdateNodeColor();
         UpdateNodeColor();
-        node.Renderer.material.color = node.Normal_Color;
-        node.Renderer.material.color += node.Normal_Color / 4f;
+        node.MeshRenderer.material.color = node.Normal_Color;
+        node.MeshRenderer.material.color += node.Normal_Color / 4f;
 
         // 一時的に保持していた指揮官をリストに戻す
         Commander.Add(firstCommander);

@@ -151,18 +151,17 @@ public class GameManager : MonoBehaviour
         // 左クリック
         if (Input.GetMouseButtonDown(0))
         {
-            // 前にセレクトしたノードの色を戻す
-            if (SelectNode != null)
-            {
-                SelectNode.Renderer.material.color = SelectNode.Normal_Color;
-                foreach (var a in SelectNode.ConnectNode)
-                {
-                    a.Renderer.material.color = a.Normal_Color;
-                }
-            }
+            Node node = SelectNode;
 
             // 一旦選択を解除
             SelectNode = null;
+
+            // 前にセレクトしたノードの色を戻す
+            if (node != null)
+            {
+                node.UpdateNodeColor();
+                node.ConnectNode.ForEach(c => c.UpdateNodeColor());
+            }
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, 500.0f))
@@ -171,10 +170,10 @@ public class GameManager : MonoBehaviour
                 {
                     // 新しく選択したノードの色を変える
                     SelectNode = hit.collider.gameObject.GetComponent<Node>();
-                    SelectNode.Renderer.material.color += SelectNode.Normal_Color;
+                    SelectNode.MeshRenderer.material.color += SelectNode.Normal_Color;
                     foreach (var a in SelectNode.ConnectNode)
                     {
-                        a.Renderer.material.color += a.Normal_Color / 4f;
+                        a.MeshRenderer.material.color += a.Normal_Color / 4f;
                     }
                     Debug.Log("Move : " + SelectNode.MovePermission + " Commander : " + SelectNode.Commander.Count + " Solder : " + SelectNode.Soldier.Count);
                 }
