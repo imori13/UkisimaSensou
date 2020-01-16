@@ -192,7 +192,8 @@ public class Node : MonoBehaviour
             case PlayerEnum.Player01:
                 if (IsBaseNode)
                 {
-                    Tower = CreateTower(Player01Tower, Player01TowerMaterial);
+                    if (Tower != null)
+                        Tower = CreateTower(Player01Tower, Player01TowerMaterial);
                     MeshFilter.mesh = Player01Base;
                     MeshRenderer.material = Player01BaseMaterial;
                 }
@@ -206,7 +207,8 @@ public class Node : MonoBehaviour
             case PlayerEnum.Player02:
                 if (IsBaseNode)
                 {
-                    Tower = CreateTower(Player02Tower, Player02TowerMaterial);
+                    if (Tower != null)
+                        Tower = CreateTower(Player02Tower, Player02TowerMaterial);
                     MeshFilter.mesh = Player02Base;
                     MeshRenderer.material = Player02BaseMaterial;
                 }
@@ -219,16 +221,32 @@ public class Node : MonoBehaviour
                 break;
             case PlayerEnum.Player03:
                 if (IsBaseNode)
-                    Tower = CreateTower(Player01Base, Player01BaseMaterial);
-                MeshFilter.mesh = Player02Mesh;
-                MeshRenderer.material = Player02Material;
+                {
+                    if (Tower != null)
+                        Tower = CreateTower(Player01Base, Player01BaseMaterial);
+                    MeshFilter.mesh = Player02Base;
+                    MeshRenderer.material = Player02BaseMaterial;
+                }
+                else
+                {
+                    MeshFilter.mesh = Player02Mesh;
+                    MeshRenderer.material = Player02Material;
+                }
                 Normal_Color = new Color(0.3f, 0.3f, 1.0f);
                 break;
             case PlayerEnum.Player04:
                 if (IsBaseNode)
-                    Tower = CreateTower(Player02Base, Player02BaseMaterial);
-                MeshFilter.mesh = Player02Mesh;
-                MeshRenderer.material = Player02Material;
+                {
+                    if (Tower != null)
+                        Tower = CreateTower(Player01Base, Player01BaseMaterial);
+                    MeshFilter.mesh = Player02Base;
+                    MeshRenderer.material = Player02BaseMaterial;
+                }
+                else
+                {
+                    MeshFilter.mesh = Player02Mesh;
+                    MeshRenderer.material = Player02Material;
+                }
                 Normal_Color = Color.green;
                 break;
             case PlayerEnum.Player05:

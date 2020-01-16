@@ -19,6 +19,10 @@ public class GameManager : MonoBehaviour
     public Node SelectNode { get; set; }
     // ゲームが開始状態か否か
     public bool IsStart { get; private set; } = false;
+    // バトル画面管理
+    public BattleWindowManager BattleWindowManager { get; private set; }
+
+    bool timestop = false;
 
     void Start()
     {
@@ -26,6 +30,7 @@ public class GameManager : MonoBehaviour
         SelectNode = null;
         TimerText.gameObject.SetActive(false);
         time = 10;
+        BattleWindowManager = GetComponent<BattleWindowManager>();
     }
 
     void Update()
@@ -37,7 +42,8 @@ public class GameManager : MonoBehaviour
 
     void FixedUpdate()
     {
-        time -= (IsStart) ? (Time.deltaTime) : (0);
+        Debug.Log(IsStart);
+        time -= (IsStart) ? (MyTime.deltaTime) : (0);
         TimerText.text = "Time > " + time.ToString("00.00");
         AttackAI();
         MoveAI();
@@ -239,6 +245,10 @@ public class GameManager : MonoBehaviour
         movebox.PlayerEnum = node1.PlayerEnum;
         // Mapの参照を与える
         movebox.Map = Map;
+        // GameManagerの参照を与える
+        movebox.GameManager = this;
+        // BattleWindowManagerの参照を与える
+        movebox.BattleWindowManager = BattleWindowManager;
 
         return movebox;
     }
@@ -425,5 +435,4 @@ public class GameManager : MonoBehaviour
     void FinishGame()
     {
 
-    }
-}
+    }}

@@ -8,9 +8,9 @@ public class Commander : MonoBehaviour
 
     Vector3 prevPos;
 
-    void FixedUpdate()
+    void Update()
     {
-        transform.localPosition = Vector3.Lerp(transform.localPosition, DestPosition, 0.1f);
+        transform.localPosition = Vector3.Lerp(transform.localPosition, DestPosition, 0.1f * MyTime.time);
 
         Vector3 dir = transform.position - prevPos;
         Vector3 vec3 = new Vector3(dir.x, 0, dir.z);

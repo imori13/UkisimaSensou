@@ -26,7 +26,7 @@ public class MapManager : MonoBehaviour
     static float GenerateSize = 70;
     public static readonly int PlayerCount = 4;
     static readonly int CreateNodeCount = 75;
-    static readonly int MinPlayerNodeCount = 5;
+    static readonly int MinPlayerNodeCount = 12;
     static readonly int RemoveLineDistance = 5;
 
     public List<Node> PlayerBaseNode { get; private set; } = new List<Node>();  // 各プレイヤーの本拠地
@@ -86,7 +86,7 @@ public class MapManager : MonoBehaviour
             Node instance = Instantiate(Node);
 
             float f = i / (float)PlayerCount;
-            float rad = Random.Range(-20f, 20f) + 360f * f * Mathf.Deg2Rad;
+            float rad = (Random.Range(-25f, 25f) + 360f * f) * Mathf.Deg2Rad;
             Vector3 vec3 = new Vector3(Mathf.Cos(rad), 0, Mathf.Sin(rad));
             vec3 *= Random.Range(40f, 70f);
 
@@ -103,6 +103,8 @@ public class MapManager : MonoBehaviour
             instance.IsBaseNode = true;
             instance.Map = this;
         }
+
+        PlayerBaseNode= PlayerBaseNode.OrderBy ( a => System.Guid.NewGuid () ).ToList ();
 
         StartCoroutine("CreateNodes");
         yield break;
@@ -327,72 +329,10 @@ public class MapManager : MonoBehaviour
             yield return null;
         }
 
-        //// 各プレイヤーランダムに拠点を決める
-        //for (int i = 0; i < PlayerCount; i++)
-        //{
-        //    while (true)
-        //    {
-
-        //// 接続数が1のやつを本拠地として選ぶ
-        //var ConnectOneNode = MapNode.Where(n => n.ConnectNode.Count == 1).ToArray();
-        //// 接続数が１のやつがプレイヤーの数よりも少なかったらもう一度マップを生成するところから
-        //if (ConnectOneNode.Count() < PlayerCount)
-        //{
-        //    StartCoroutine("Initialize");
-        //    yield break;
-        //}
-
-        //Node baseNode = ConnectOneNode[Random.Range(0, ConnectOneNode.Count())];
-
-        //        // すでにそこ誰かの本拠地ならスキップ
-        //        if (baseNode.IsBaseNode) continue;
-        //        // 隣に誰かの本拠地があるならスキップ
-
-        //        List<Node> openList = new List<Node> { baseNode };
-        //        int Num = 0;
-        //        Hoge(ref openList, baseNode, Num);
-        //        void Hoge(ref List<Node> list, Node node, int numm)
-        //        {
-        //            foreach (var connect in node.ConnectNode)
-        //            {
-        //                if (list.Contains(connect)) continue;
-        //                openList.Add(connect);
-        //                numm++;
-        //                if (numm >= 2) { continue; }
-        //                Hoge(ref list, connect, numm);
-        //            }
-        //        }
-
-        //        bool flagg = false;
-        //        PlayerBaseNode.ToList().ForEach(b => { if (openList.Contains(b)) { flagg = true; } });
-        //        if (flagg) continue;
-
-        //        // プレイヤーの本拠地に設定する
-        //        baseNode.PlayerEnum = (PlayerEnum)i;
-        //        baseNode.IsBaseNode = true;
-        //        PlayerBaseNode[i] = baseNode;
-        //        baseNode.UpdateNodeColor();
-        //        yield return null;
-
-        //        break;
-        //    }
-        //}
-
+        int count = 0;
+        int breakCount = 0;
         while (true)
         {
-            // 各プレイヤーランダムに拠点を決める
-            for (int i = 0; i < PlayerCount; i++)
-            {
-                Node node = PlayerBaseNode[Random.Range(0, PlayerBaseNode.Count())];
-
-                // すでにそこ誰かの本拠地ならスキップ
-                if (node.IsBaseNode) continue;
-
-                // プレイヤーの本拠地に設定する
-                node.PlayerEnum = (PlayerEnum)i;
-                node.UpdateNodeColor();
-            }
-
             List<Node>[] openNode = new List<Node>[PlayerCount];
 
             for (int i = 0; i < PlayerCount; i++)
@@ -432,6 +372,9 @@ public class MapManager : MonoBehaviour
                 newNode.PlayerEnum = (PlayerEnum)num;
                 newNode.UpdateNodeColor();
 
+                count++;
+                if (count >= 1) { count = 0; yield return null; }
+
                 // リストに新しく開く場所を追加
                 openNode[num].Add(newNode);
 
@@ -442,6 +385,9 @@ public class MapManager : MonoBehaviour
                 num++;
                 if (num >= PlayerCount) { num = 0; }
             }
+
+            breakCount++;
+            if (breakCount >= 4) { StartCoroutine("Initialize"); yield break; }
 
             yield return null;
 
@@ -479,7 +425,7 @@ public class MapManager : MonoBehaviour
 
         for (int i = 0; i < PlayerCount; i++)
         {
-            time[i] += Time.deltaTime;
+            time[i] += MyTime.deltaTime;
 
             float countMax = 50;
             float countMin = 5;

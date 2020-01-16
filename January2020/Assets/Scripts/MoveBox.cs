@@ -5,7 +5,11 @@ using UnityEngine;
 // ノード間を移動するときに生成する、移動ボックス
 public class MoveBox : MonoBehaviour
 {
+    static readonly float speed = 5;
+
     public MapManager Map { get; set; }
+    public GameManager GameManager { get; set; }
+    public BattleWindowManager BattleWindowManager { get; set; }
     public PlayerEnum PlayerEnum { get; set; }
     public Node Node1 { get; set; }
     public Node Node2 { get; set; }
@@ -13,23 +17,22 @@ public class MoveBox : MonoBehaviour
     public List<Commander> Commander { get; private set; } = new List<Commander>();
     public List<Soldier> Soldier { get; private set; } = new List<Soldier>();
 
-    static readonly float speed = 5;
+    public BattleResult ButtleStruct { get; private set; }
 
     void Start()
     {
 
     }
 
-    void FixedUpdate()
+    void Update()
     {
         // 線形補完を応用したイージング処理で移動させる
-        transform.position = Vector3.Lerp(transform.position, Node2.transform.position, 0.05f);
+        transform.position = Vector3.Lerp(transform.position, Node2.transform.position, 0.05f * MyTime.time);
 
-        // ノードに近くなったら終了
+        if (BattleWindowManager.BattleMoveBox != null) return;
         if (Vector3.SqrMagnitude(transform.position - Node2.transform.position) <= (0.5f * 0.5f))
         {
             Arrival();
-            Destroy(gameObject);
         }
     }
 
@@ -70,26 +73,36 @@ public class MoveBox : MonoBehaviour
         // 親を更新
         Node2.Commander.ForEach(c => c.UpdateNode(Node2));
         Node2.Soldier.ForEach(c => c.UpdateNode(Node2));
+
+        // MoveBoxを削除
+        Destroy(gameObject);
     }
 
     // 攻撃
     void Attack()
     {
-        if (Battle())
+        ButtleStruct = new BattleResult();
+        ButtleStruct.Battle(this);
+
+        // もしプレイヤーと関係のあるバトルだった場合
+        if (Node1.PlayerEnum == PlayerEnum.Player01 || Node2.PlayerEnum == PlayerEnum.Player01)
+        {
+            BattleWindowManager.Initialize(this);
+            return;
+        }
+
+        if (ButtleStruct.AttackTotalCombatPower >= ButtleStruct.DefenceTotalCombatPower)
             AttackWin();
         else
             AttackLose();
     }
 
-    bool Battle()
+    public void AttackHoge()
     {
-        float character_count01 = Commander.Count + Soldier.Count;
-        float combatpower01 = character_count01 * (Commander.Count + 1);
-
-        float character_count02 = Node2.Commander.Count + Node2.Soldier.Count;
-        float combatpower02 = character_count02 * (Node2.Commander.Count + 1);
-
-        return (combatpower01 >= combatpower02);
+        if (ButtleStruct.AttackTotalCombatPower >= ButtleStruct.DefenceTotalCombatPower)
+            AttackWin();
+        else
+            AttackLose();
     }
 
     // 勝利時
@@ -144,6 +157,9 @@ public class MoveBox : MonoBehaviour
 
         // ノードの色をすべて更新
         Map.AllUpdateNodeColor();
+
+        // MoveBoxを削除
+        Destroy(gameObject);
     }
 
     // 敗北時
@@ -154,5 +170,8 @@ public class MoveBox : MonoBehaviour
         Commander.Clear();
         Soldier.ForEach(s => Destroy(s.gameObject));
         Soldier.Clear();
+
+        // MoveBoxを削除
+        Destroy(gameObject);
     }
 }
