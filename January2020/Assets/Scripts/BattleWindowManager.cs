@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,12 +11,19 @@ public class BattleWindowManager : MonoBehaviour
     [SerializeField] GameObject SoldierBattlePrefab;
 
     [SerializeField] GameObject BattleCamera;
-    [SerializeField] Text AttackCombatPower;
-    [SerializeField] Text DefenceCombatPower;
+    [SerializeField] Text AttackCombatPowerText;
+    [SerializeField] Text DefenceCombatPowerText;
+    [SerializeField] Text AttackMultiplicationText;
+    [SerializeField] Text DefenceMultiplicationText;
+    [SerializeField] Sprite[] DiceImage;
+    [SerializeField] GameObject DiceUI;
+    [SerializeField] Image DiceImagePrefab;
     List<GameObject> attackBattleSoldier = new List<GameObject>();
     List<GameObject> attackBattleCommander = new List<GameObject>();
     List<GameObject> defenceBattleSoldier = new List<GameObject>();
     List<GameObject> defenceBattleCommander = new List<GameObject>();
+    List<Image> AttackDiceImageList = new List<Image>();
+    List<Image> DefenceDiceImageList = new List<Image>();
 
     static Vector3 BATTLE_POS = new Vector3(0, 0, -500f);
 
@@ -25,14 +33,18 @@ public class BattleWindowManager : MonoBehaviour
     void Start()
     {
         BattleCamera.SetActive(false);
-        AttackCombatPower.text = "";
-        DefenceCombatPower.text = "";
+        AttackCombatPowerText.text = "";
+        DefenceCombatPowerText.text = "";
+        AttackMultiplicationText.text = "";
+        DefenceMultiplicationText.text = "";
     }
 
     public void Initialize(MoveBox moveBox)
     {
-        AttackCombatPower.text = "";
-        DefenceCombatPower.text = "";
+        AttackCombatPowerText.text = "";
+        DefenceCombatPowerText.text = "";
+        AttackMultiplicationText.text = "";
+        DefenceMultiplicationText.text = "";
         attackBattleSoldier.Clear();
         attackBattleCommander.Clear();
         defenceBattleSoldier.Clear();
@@ -92,7 +104,6 @@ public class BattleWindowManager : MonoBehaviour
         float time = 0;
         while (true)
         {
-            Camera.main.transform.position = Vector3.Lerp(Camera.main.transform.position, BattleMoveBox.Node2.transform.position + new Vector3(0, 20, -15f), 0.2f * Time.deltaTime * 60);
             time += Time.deltaTime;
 
             if (time >= 1) { break; }
@@ -129,6 +140,9 @@ public class BattleWindowManager : MonoBehaviour
         Vector3 scale = Vector3.zero;
         float time = 0;
         float power = 0;
+
+        AttackMultiplicationText.text = "×1.0";
+
         while (true)
         {
             scale = Vector3.Lerp(scale, Vector3.one * 0.33f, 0.2f * Time.deltaTime * 60);
@@ -136,10 +150,10 @@ public class BattleWindowManager : MonoBehaviour
             attackBattleSoldier.ForEach(s => s.transform.localScale = scale);
             attackBattleCommander.ForEach(c => c.transform.localScale = scale);
 
-            power = Mathf.Lerp(power, BattleMoveBox.ButtleStruct.AttackBasicCombatPower, 0.2f * Time.deltaTime * 60);
-            AttackCombatPower.text = Mathf.RoundToInt(power).ToString();
+            power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.AttackBasicCombatPower, 0.2f * Time.deltaTime * 60);
+            AttackCombatPowerText.text = Mathf.RoundToInt(power).ToString();
 
-            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleStruct.AttackBasicCombatPower)
+            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.AttackBasicCombatPower)
             {
                 time += Time.deltaTime;
 
@@ -159,6 +173,9 @@ public class BattleWindowManager : MonoBehaviour
         Vector3 scale = Vector3.zero;
         float time = 0;
         float power = 0;
+
+        DefenceMultiplicationText.text = "1.0×";
+
         while (true)
         {
             scale = Vector3.Lerp(scale, Vector3.one * 0.33f, 0.2f * Time.deltaTime * 60);
@@ -166,10 +183,10 @@ public class BattleWindowManager : MonoBehaviour
             defenceBattleSoldier.ForEach(s => s.transform.localScale = scale);
             defenceBattleCommander.ForEach(c => c.transform.localScale = scale);
 
-            power = Mathf.Lerp(power, BattleMoveBox.ButtleStruct.DefenceBasicCombatPower, 0.2f * Time.deltaTime * 60);
-            DefenceCombatPower.text = Mathf.RoundToInt(power).ToString();
+            power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.DefenceBasicCombatPower, 0.2f * Time.deltaTime * 60);
+            DefenceCombatPowerText.text = Mathf.RoundToInt(power).ToString();
 
-            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleStruct.DefenceBasicCombatPower)
+            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.DefenceBasicCombatPower)
             {
                 time += Time.deltaTime;
 
@@ -187,14 +204,53 @@ public class BattleWindowManager : MonoBehaviour
     // 攻撃側がサイコロを振って、戦闘力に計上する
     IEnumerator State05()
     {
-        float time = 0;
-        float power = BattleMoveBox.ButtleStruct.AttackBasicCombatPower;
+        for (int i = 0; i < BattleMoveBox.ButtleResult.AttackCommanderDice.Count; i++)
+        {
+            Image instance = Instantiate(DiceImagePrefab).GetComponent<Image>();
+            instance.transform.SetParent(DiceUI.transform);
+            instance.transform.localPosition = Vector3.left * 250 - new Vector3(i * 110, 0, 0);
+            AttackDiceImageList.Add(instance);
+        }
+
+        float endTime = 0;
+        float randomTime = 0;
         while (true)
         {
-            power = Mathf.Lerp(power, BattleMoveBox.ButtleStruct.AttackTotalCombatPower, 0.2f * Time.deltaTime * 60);
-            AttackCombatPower.text = Mathf.RoundToInt(power).ToString();
+            endTime += Time.deltaTime;
+            randomTime += Time.deltaTime;
 
-            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleStruct.AttackTotalCombatPower)
+            if (endTime >= 3)
+            {
+                break;
+            }
+
+            if (randomTime >= 0.1f)
+            {
+                randomTime = 0;
+                AttackDiceImageList.ForEach(d => d.sprite = DiceImage[Random.Range(0, DiceImage.Length)]);
+                yield return null;
+            }
+        }
+
+        float multiplication = 1.0f;
+        float mTime = 0;
+        while (true)
+        {
+            mTime += Time.deltaTime;
+            multiplication = Mathf.Lerp(multiplication, 1 + (BattleMoveBox.ButtleResult.AttackCommanderDice.Sum() * 0.1f), 0.1f * Time.deltaTime * 60);
+            AttackMultiplicationText.text = "×" + multiplication.ToString("0.0");
+            if (mTime >= 2) { break; }
+            yield return null;
+        }
+
+        float time = 0;
+        float power = BattleMoveBox.ButtleResult.AttackBasicCombatPower;
+        while (true)
+        {
+            power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.AttackTotalCombatPower, 0.2f * Time.deltaTime * 60);
+            AttackCombatPowerText.text = Mathf.Round(power).ToString();
+
+            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.AttackTotalCombatPower)
             {
                 time += Time.deltaTime;
 
@@ -211,18 +267,58 @@ public class BattleWindowManager : MonoBehaviour
     // 防御側がサイコロを振って、戦闘力に計上する
     IEnumerator State06()
     {
-        float time = 0;
-        float power = BattleMoveBox.ButtleStruct.DefenceBasicCombatPower;
+        for (int i = 0; i < BattleMoveBox.ButtleResult.DefenceCommanderDice.Count; i++)
+        {
+            Image instance = Instantiate(DiceImagePrefab).GetComponent<Image>();
+            instance.transform.SetParent(DiceUI.transform);
+            instance.transform.localPosition = Vector3.right * 250 + new Vector3(i * 110, 0, 0);
+            DefenceDiceImageList.Add(instance);
+        }
+
+        float endTime = 0;
+        float randomTime = 0;
+
         while (true)
         {
-            power = Mathf.Lerp(power, BattleMoveBox.ButtleStruct.DefenceTotalCombatPower, 0.2f * Time.deltaTime * 60);
-            DefenceCombatPower.text = Mathf.RoundToInt(power).ToString();
+            endTime += Time.deltaTime;
+            randomTime += Time.deltaTime;
 
-            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleStruct.DefenceTotalCombatPower)
+            if (endTime >= 3)
+            {
+                break;
+            }
+
+            if (randomTime >= 0.1f)
+            {
+                randomTime = 0;
+                DefenceDiceImageList.ForEach(d => d.sprite = DiceImage[Random.Range(0, DiceImage.Length)]);
+                yield return null;
+            }
+        }
+
+        float multiplication = 1.0f;
+        float mTime = 0;
+        while (true)
+        {
+            mTime += Time.deltaTime;
+            multiplication = Mathf.Lerp(multiplication, 1 + (BattleMoveBox.ButtleResult.DefenceCommanderDice.Sum() * 0.1f), 0.1f * Time.deltaTime * 60);
+            DefenceMultiplicationText.text = multiplication.ToString("0.0") + "×";
+            if (mTime >= 2) { break; }
+            yield return null;
+        }
+
+        float time = 0;
+        float power = BattleMoveBox.ButtleResult.DefenceBasicCombatPower;
+        while (true)
+        {
+            power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.DefenceTotalCombatPower, 0.2f * Time.deltaTime * 60);
+            DefenceCombatPowerText.text = Mathf.RoundToInt(power).ToString();
+
+            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.DefenceTotalCombatPower)
             {
                 time += Time.deltaTime;
 
-                if (time >= 0.2f) { break; }
+                if (time >= 2f) { break; }
             }
             yield return null;
         }
@@ -235,7 +331,7 @@ public class BattleWindowManager : MonoBehaviour
     // 勝ったほうのキャラ群が、相手に突っ込んで相手側が消滅する
     IEnumerator State07()
     {
-        bool attackWin = BattleMoveBox.ButtleStruct.AttackTotalCombatPower >= BattleMoveBox.ButtleStruct.DefenceTotalCombatPower;
+        bool attackWin = BattleMoveBox.ButtleResult.AttackTotalCombatPower >= BattleMoveBox.ButtleResult.DefenceTotalCombatPower;
 
         if (attackWin)
         {
@@ -289,6 +385,13 @@ public class BattleWindowManager : MonoBehaviour
     IEnumerator State08()
     {
         BattleCamera.SetActive(false);
+
+        AttackCombatPowerText.text = "";
+        DefenceCombatPowerText.text = "";
+        AttackDiceImageList.ForEach(d => Destroy(d.gameObject));
+        AttackDiceImageList.Clear();
+        DefenceDiceImageList.ForEach(d => Destroy(d.gameObject));
+        DefenceDiceImageList.Clear();
 
         float time = 0;
         while (true)

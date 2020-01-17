@@ -8,18 +8,21 @@ public class Node : MonoBehaviour
     [SerializeField] GameObject CommanderPrefab;
     [SerializeField] GameObject SoldierPrefab;
 
-    [SerializeField] Mesh Player01Mesh;
-    [SerializeField] Mesh Player01Base;
-    [SerializeField] Mesh Player01Tower;
+    [SerializeField] Mesh NodeMesh;
+    [SerializeField] Mesh BaseMesh;
+    [SerializeField] Mesh TowerMesh;
     [SerializeField] Material Player01Material;
     [SerializeField] Material Player01BaseMaterial;
     [SerializeField] Material Player01TowerMaterial;
-    [SerializeField] Mesh Player02Mesh;
-    [SerializeField] Mesh Player02Base;
-    [SerializeField] Mesh Player02Tower;
     [SerializeField] Material Player02Material;
     [SerializeField] Material Player02BaseMaterial;
     [SerializeField] Material Player02TowerMaterial;
+    [SerializeField] Material Player03Material;
+    [SerializeField] Material Player03BaseMaterial;
+    [SerializeField] Material Player03TowerMaterial;
+    [SerializeField] Material Player04Material;
+    [SerializeField] Material Player04BaseMaterial;
+    [SerializeField] Material Player04TowerMaterial;
 
     public Color Normal_Color { get; set; }   // 国ごとの通常色
     public PlayerEnum PlayerEnum { get; set; } = PlayerEnum.None;
@@ -170,15 +173,15 @@ public class Node : MonoBehaviour
         return flag;
     }
 
-    GameObject CreateTower(Mesh mesh, Material material)
+    GameObject CreateTower(Material material)
     {
         GameObject instance = new GameObject("Tower");
         instance.transform.SetParent(transform);
         instance.transform.position = transform.position;
         instance.transform.localScale = Vector3.one * 0.5f;
         instance.transform.Rotate(0, Random.Range(0, 360f), 0);
-        instance.AddComponent<MeshFilter>().mesh = Player01Tower;
-        instance.AddComponent<MeshRenderer>().material = Player01TowerMaterial;
+        instance.AddComponent<MeshFilter>().mesh = TowerMesh;
+        instance.AddComponent<MeshRenderer>().material = material;
 
         return instance;
     }
@@ -192,29 +195,29 @@ public class Node : MonoBehaviour
             case PlayerEnum.Player01:
                 if (IsBaseNode)
                 {
-                    if (Tower != null)
-                        Tower = CreateTower(Player01Tower, Player01TowerMaterial);
-                    MeshFilter.mesh = Player01Base;
+                    if (Tower == null)
+                        Tower = CreateTower(Player01TowerMaterial);
+                    MeshFilter.mesh = BaseMesh;
                     MeshRenderer.material = Player01BaseMaterial;
                 }
                 else
                 {
-                    MeshFilter.mesh = Player01Mesh;
+                    MeshFilter.mesh = NodeMesh;
                     MeshRenderer.material = Player01Material;
                 }
-                Normal_Color = Color.white;
+                Normal_Color = Color.green;
                 break;
             case PlayerEnum.Player02:
                 if (IsBaseNode)
                 {
-                    if (Tower != null)
-                        Tower = CreateTower(Player02Tower, Player02TowerMaterial);
-                    MeshFilter.mesh = Player02Base;
+                    if (Tower == null)
+                        Tower = CreateTower(Player02TowerMaterial);
+                    MeshFilter.mesh = BaseMesh;
                     MeshRenderer.material = Player02BaseMaterial;
                 }
                 else
                 {
-                    MeshFilter.mesh = Player02Mesh;
+                    MeshFilter.mesh = NodeMesh;
                     MeshRenderer.material = Player02Material;
                 }
                 Normal_Color = Color.white;
@@ -222,32 +225,32 @@ public class Node : MonoBehaviour
             case PlayerEnum.Player03:
                 if (IsBaseNode)
                 {
-                    if (Tower != null)
-                        Tower = CreateTower(Player01Base, Player01BaseMaterial);
-                    MeshFilter.mesh = Player02Base;
-                    MeshRenderer.material = Player02BaseMaterial;
+                    if (Tower == null)
+                        Tower = CreateTower(Player03TowerMaterial);
+                    MeshFilter.mesh = BaseMesh;
+                    MeshRenderer.material = Player03BaseMaterial;
                 }
                 else
                 {
-                    MeshFilter.mesh = Player02Mesh;
-                    MeshRenderer.material = Player02Material;
+                    MeshFilter.mesh = NodeMesh;
+                    MeshRenderer.material = Player03Material;
                 }
-                Normal_Color = new Color(0.3f, 0.3f, 1.0f);
+                Normal_Color = Color.white;
                 break;
             case PlayerEnum.Player04:
                 if (IsBaseNode)
                 {
-                    if (Tower != null)
-                        Tower = CreateTower(Player01Base, Player01BaseMaterial);
-                    MeshFilter.mesh = Player02Base;
-                    MeshRenderer.material = Player02BaseMaterial;
+                    if (Tower == null)
+                        Tower = CreateTower(Player04TowerMaterial);
+                    MeshFilter.mesh = BaseMesh;
+                    MeshRenderer.material = Player04BaseMaterial;
                 }
                 else
                 {
-                    MeshFilter.mesh = Player02Mesh;
-                    MeshRenderer.material = Player02Material;
+                    MeshFilter.mesh = NodeMesh;
+                    MeshRenderer.material = Player04Material;
                 }
-                Normal_Color = Color.green;
+                Normal_Color = Color.white;
                 break;
             case PlayerEnum.Player05:
                 break;
@@ -258,7 +261,7 @@ public class Node : MonoBehaviour
             case PlayerEnum.Player08:
                 break;
             case PlayerEnum.None:
-                MeshFilter.mesh = Player01Mesh;
+                MeshFilter.mesh = NodeMesh;
                 MeshRenderer.material = Player01Material;
                 Normal_Color = Color.gray;
                 break;

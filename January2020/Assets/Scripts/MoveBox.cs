@@ -17,7 +17,7 @@ public class MoveBox : MonoBehaviour
     public List<Commander> Commander { get; private set; } = new List<Commander>();
     public List<Soldier> Soldier { get; private set; } = new List<Soldier>();
 
-    public BattleResult ButtleStruct { get; private set; }
+    public BattleResult ButtleResult { get; private set; }
 
     void Start()
     {
@@ -81,8 +81,8 @@ public class MoveBox : MonoBehaviour
     // 攻撃
     void Attack()
     {
-        ButtleStruct = new BattleResult();
-        ButtleStruct.Battle(this);
+        ButtleResult = new BattleResult();
+        ButtleResult.Battle(this);
 
         // もしプレイヤーと関係のあるバトルだった場合
         if (Node1.PlayerEnum == PlayerEnum.Player01 || Node2.PlayerEnum == PlayerEnum.Player01)
@@ -91,7 +91,7 @@ public class MoveBox : MonoBehaviour
             return;
         }
 
-        if (ButtleStruct.AttackTotalCombatPower >= ButtleStruct.DefenceTotalCombatPower)
+        if (ButtleResult.AttackTotalCombatPower >= ButtleResult.DefenceTotalCombatPower)
             AttackWin();
         else
             AttackLose();
@@ -99,7 +99,7 @@ public class MoveBox : MonoBehaviour
 
     public void AttackHoge()
     {
-        if (ButtleStruct.AttackTotalCombatPower >= ButtleStruct.DefenceTotalCombatPower)
+        if (ButtleResult.AttackTotalCombatPower >= ButtleResult.DefenceTotalCombatPower)
             AttackWin();
         else
             AttackLose();

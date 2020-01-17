@@ -42,7 +42,6 @@ public class GameManager : MonoBehaviour
 
     void FixedUpdate()
     {
-        Debug.Log(IsStart);
         time -= (IsStart) ? (MyTime.deltaTime) : (0);
         TimerText.text = "Time > " + time.ToString("00.00");
         AttackAI();
@@ -265,7 +264,7 @@ public class GameManager : MonoBehaviour
                 //if (node.PlayerEnum == PlayerEnum.Player01) continue;
                 if (node.PlayerEnum == connect.PlayerEnum) continue;
 
-                if (Random.Range(0, 50) != 0) continue;
+                //if (Random.Range(0, 50) != 0) continue;
 
                 float character_count01 = node.Commander.Count - 1 + node.Soldier.Count;
                 float combatpower01 = character_count01 * (node.Commander.Count + 1 - 1);
@@ -305,7 +304,7 @@ public class GameManager : MonoBehaviour
 
             foreach (var node in Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
             {
-                if (Random.Range(0, 5) != 0) continue;
+                //if (Random.Range(0, 5) != 0) continue;
 
                 // 違う領土ならスキップ
                 if (node.PlayerEnum != (PlayerEnum)i) continue;
