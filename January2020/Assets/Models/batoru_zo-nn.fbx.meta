@@ -8,7 +8,7 @@ ModelImporter:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: tikei
-    second: {fileID: 2800000, guid: 6663018cff6601e44bcfb4199565bbc4, type: 3}
+    second: {fileID: 2800000, guid: f78ba276e11e93d4ca9f8daf3cec975f, type: 3}
   materials:
     importMaterials: 1
     materialName: 0

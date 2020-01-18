@@ -48,20 +48,20 @@ public class GameManager : MonoBehaviour
         MoveAI();
     }
 
-    void Move(Node node1, Node node2)
+    public void Move(Node node1, Node node2, Node destNode = null)
     {
         if (node1 == node2) { return; }
 
         if (node1.MovePermission && node2.MovePermission)
         {
-            MoveBox movebox = CreateMovebox(node1, node2);
 
             // 兵士がいないなら早期リターン、または開いてノードの兵士が一定以上なら移動できない
-            if (node1.Soldier.Count <= 0 || node2.Soldier.Count >= 5)
-            {
-                Destroy(movebox.gameObject);
-                return;
-            }
+            if (node1.Soldier.Count <= 0 || node2.Soldier.Count >= 5) return;
+
+            MoveBox movebox = CreateMovebox(node1, node2);
+
+            if (destNode != null && node2 != destNode)
+                movebox.DestNode = destNode;
 
             // Nodeに向かっているMoveBoxを追加するリストにぶち込む(生成時にMoveBoxのキャラ数を足す用のリスト)
             node1.HeadingMovebox.Add(movebox);
@@ -80,7 +80,6 @@ public class GameManager : MonoBehaviour
             movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
 
             // お互いのノードの移動許可フラグをOFFにする
-            node1.MovePermission = false;
             node2.MovePermission = false;
 
             // 親をNULLに更新
@@ -88,20 +87,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Attack(Node node1, Node node2)
+    public void Attack(Node node1, Node node2)
     {
         if (node1 == node2) { return; }
 
         if (node1.MovePermission && node2.MovePermission)
         {
-            MoveBox movebox = CreateMovebox(node1, node2);
 
             // 指揮官が二人未満なら、または兵士がいないなら早期リターン
-            if (node1.Commander.Count < 2 || node1.Soldier.Count <= 0)
-            {
-                Destroy(movebox.gameObject);
-                return;
-            }
+            if (node1.Commander.Count < 2 || node1.Soldier.Count <= 0) return;
+
+            MoveBox movebox = CreateMovebox(node1, node2);
 
             // Nodeに向かっているMoveBoxを追加するリストにぶち込む(生成時にMoveBoxのキャラ数を足す用のリスト)
             node1.HeadingMovebox.Add(movebox);
@@ -127,7 +123,6 @@ public class GameManager : MonoBehaviour
             movebox.Soldier.ForEach(s => s.transform.SetParent(movebox.transform));
 
             // お互いのノードの移動許可フラグをOFFにする
-            node1.MovePermission = false;
             node2.MovePermission = false;
 
             // 親をNULLに更新
@@ -180,7 +175,6 @@ public class GameManager : MonoBehaviour
                     {
                         a.MeshRenderer.material.color += a.Normal_Color / 4f;
                     }
-                    Debug.Log("Move : " + SelectNode.MovePermission + " Commander : " + SelectNode.Commander.Count + " Solder : " + SelectNode.Soldier.Count);
                 }
             }
         }
@@ -204,12 +198,10 @@ public class GameManager : MonoBehaviour
                     {
                         Node rightClickNode = hit.collider.GetComponent<Node>();
 
+                        // 移動
                         // 右クリックで選択したノードが、現在選択しているノードの隣のノードなら
                         if (SelectNode.ConnectNode.Contains(rightClickNode))
                         {
-                            Debug.Log("node1 : " + SelectNode.MovePermission + " node2 : " + rightClickNode.MovePermission);
-
-                            // 移動
                             if (SelectNode.PlayerEnum == rightClickNode.PlayerEnum)
                             {
                                 Move(SelectNode, rightClickNode);
@@ -219,6 +211,12 @@ public class GameManager : MonoBehaviour
                             {
                                 Attack(SelectNode, rightClickNode);
                             }
+                        }
+                        else
+                        {
+                            List<Node> SearchNode = SearchRoute(SelectNode, rightClickNode);
+                            if (SearchNode != null)
+                                Move(SearchNode[0], SearchNode[1], rightClickNode);
                         }
                     }
                 }
@@ -266,13 +264,17 @@ public class GameManager : MonoBehaviour
 
                 //if (Random.Range(0, 50) != 0) continue;
 
-                float character_count01 = node.Commander.Count - 1 + node.Soldier.Count;
-                float combatpower01 = character_count01 * (node.Commander.Count + 1 - 1);
+                // 攻撃側は今いる指揮官-1しか動かせないため、-1している
+                // が、、、攻撃不利で硬直状態なので防衛55で攻撃45でも攻撃するように調整
+                // 1~6の平均2.5が出たとして、有利か不利かで判断する
+                float character_count01 = node.Commander.Count + node.Soldier.Count;
+                float estimatedCombatPower01 = character_count01 * (1 + (node.Commander.Count) * 2.5f * 0.1f);
 
                 float character_count02 = connect.Commander.Count + connect.Soldier.Count;
-                float combatpower02 = character_count02 * (connect.Commander.Count + 1);
+                float estimatedCombatPower02 = character_count02 * (1 + (connect.Commander.Count) * 2.5f * 0.1f);
 
-                //if (character_count01 >= combatpower02)
+
+                if (estimatedCombatPower01 >= estimatedCombatPower02)
                 {
                     Attack(node, connect);
                 }
@@ -302,7 +304,7 @@ public class GameManager : MonoBehaviour
                 }
             }
 
-            foreach (var node in Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
+            foreach (var node in Map.MapNode.Where(n => (n.PlayerEnum == (PlayerEnum)i && n.Soldier.Count > 0)))
             {
                 //if (Random.Range(0, 5) != 0) continue;
 
@@ -313,13 +315,14 @@ public class GameManager : MonoBehaviour
                 if (frontNode.Contains(node)) continue;
 
                 // 前線のノードが存在しないならスキップ
-                if (frontNode == null) continue;
+                if (frontNode == null || frontNode.Count <= 0) continue;
 
                 // ルートを検索してリストに格納
-                List<Node> route = SearchRoute(node, (frontNode.Count == 1) ? (frontNode[0]) : (frontNode[Random.Range(0, frontNode.Count)]));
+                Node destNode = (frontNode.Count == 1) ? (frontNode[0]) : (frontNode[Random.Range(0, frontNode.Count)]);
+                List<Node> route = SearchRoute(node, destNode);
 
                 if (route != null)
-                    Move(route[0], route[1]);
+                    Move(route[0], route[1], destNode);
             }
         }
     }
@@ -406,6 +409,11 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        // 初期化
+        Map.MapNode.ForEach(n => n.PrevNode = null);
+        Map.MapNode.ForEach(n => n.Cost = float.MaxValue);
+        Map.MapNode.ForEach(n => n.Done = false);
+
         return null;
     }
 
@@ -434,4 +442,5 @@ public class GameManager : MonoBehaviour
     void FinishGame()
     {
 
-    }}
+    }
+}

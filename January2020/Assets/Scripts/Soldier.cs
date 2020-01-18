@@ -7,7 +7,17 @@ public class Soldier : MonoBehaviour
 
     public Vector3 DestPosition { get; set; }
 
+    public Animator Animator { get; private set; }
+    
     Vector3 prevPos;
+
+    [SerializeField] Material[] MaterialArray;
+    [SerializeField] SkinnedMeshRenderer SkinnedMeshRenderer;
+
+    void Start()
+    {
+        Animator = GetComponent<Animator>();
+    }
 
     void Update()
     {
@@ -18,7 +28,7 @@ public class Soldier : MonoBehaviour
         {
             transform.rotation = Quaternion.LookRotation(vec3);
         }
-
+        
         prevPos = transform.position;
     }
 
@@ -37,7 +47,12 @@ public class Soldier : MonoBehaviour
         transform.SetParent(ParentNode.transform);
 
         // 座標を更新
-        DestPosition = (MyMath.CircleRandom(0.3f, 0.45f));
+        DestPosition = (MyMath.CircleRandom(0.5f, 1.0f));
         transform.position = ParentNode.transform.position + DestPosition;
+
+        // マテリアルを更新
+        Material material = SkinnedMeshRenderer.material;
+        SkinnedMeshRenderer.material = MaterialArray[(int)ParentNode.PlayerEnum];
+        Destroy(material);
     }
 }

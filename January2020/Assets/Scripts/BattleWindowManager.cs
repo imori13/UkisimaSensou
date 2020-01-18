@@ -18,6 +18,8 @@ public class BattleWindowManager : MonoBehaviour
     [SerializeField] Sprite[] DiceImage;
     [SerializeField] GameObject DiceUI;
     [SerializeField] Image DiceImagePrefab;
+    [SerializeField] Material[] SoldierMaterials;
+    [SerializeField] Material[] CommanderMaterials;
     List<GameObject> attackBattleSoldier = new List<GameObject>();
     List<GameObject> attackBattleCommander = new List<GameObject>();
     List<GameObject> defenceBattleSoldier = new List<GameObject>();
@@ -60,6 +62,9 @@ public class BattleWindowManager : MonoBehaviour
             instance.transform.position = BATTLE_POS + new Vector3(-4, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
             instance.transform.Rotate(0, 90, 0);
             instance.transform.localScale = Vector3.zero;
+            Material material = instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material;
+            instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material = SoldierMaterials[(int)BattleMoveBox.PlayerEnum];
+            Destroy(material);
             attackBattleSoldier.Add(instance);
         }
         // 攻撃側指揮官
@@ -70,6 +75,9 @@ public class BattleWindowManager : MonoBehaviour
             instance.transform.position = BATTLE_POS + new Vector3(-6, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
             instance.transform.Rotate(0, 90, 0);
             instance.transform.localScale = Vector3.zero;
+            Material material = instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material;
+            instance.GetComponent<BattleCommander>().SkinnedMeshRenderer.material = CommanderMaterials[(int)BattleMoveBox.PlayerEnum];
+            Destroy(material);
             attackBattleCommander.Add(instance);
         }
 
@@ -81,6 +89,9 @@ public class BattleWindowManager : MonoBehaviour
             instance.transform.position = BATTLE_POS + new Vector3(4, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
             instance.transform.Rotate(0, -90, 0);
             instance.transform.localScale = Vector3.zero;
+            Material material = instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material;
+            instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material = SoldierMaterials[(int)BattleMoveBox.Node2.PlayerEnum];
+            Destroy(material);
             defenceBattleSoldier.Add(instance);
         }
         // 防御側指揮官
@@ -91,6 +102,9 @@ public class BattleWindowManager : MonoBehaviour
             instance.transform.position = BATTLE_POS + new Vector3(6, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
             instance.transform.Rotate(0, -90, 0);
             instance.transform.localScale = Vector3.zero;
+            Material material = instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material;
+            instance.GetComponent<BattleCommander>().SkinnedMeshRenderer.material = CommanderMaterials[(int)BattleMoveBox.Node2.PlayerEnum];
+            Destroy(material);
             defenceBattleCommander.Add(instance);
         }
 
@@ -204,6 +218,7 @@ public class BattleWindowManager : MonoBehaviour
     // 攻撃側がサイコロを振って、戦闘力に計上する
     IEnumerator State05()
     {
+        // サイコロ画像を配置していく
         for (int i = 0; i < BattleMoveBox.ButtleResult.AttackCommanderDice.Count; i++)
         {
             Image instance = Instantiate(DiceImagePrefab).GetComponent<Image>();
@@ -212,6 +227,7 @@ public class BattleWindowManager : MonoBehaviour
             AttackDiceImageList.Add(instance);
         }
 
+        // サイコロの画像をシャッフルしているように更新する
         float endTime = 0;
         float randomTime = 0;
         while (true)
@@ -232,6 +248,13 @@ public class BattleWindowManager : MonoBehaviour
             }
         }
 
+        // サイコロの目を更新する
+        for (int i = 0; i < BattleMoveBox.ButtleResult.AttackCommanderDice.Count; i++)
+        {
+            AttackDiceImageList[i].sprite = DiceImage[BattleMoveBox.ButtleResult.AttackCommanderDice[i] - 1];
+        }
+
+        // 係数を更新する
         float multiplication = 1.0f;
         float mTime = 0;
         while (true)
@@ -239,10 +262,11 @@ public class BattleWindowManager : MonoBehaviour
             mTime += Time.deltaTime;
             multiplication = Mathf.Lerp(multiplication, 1 + (BattleMoveBox.ButtleResult.AttackCommanderDice.Sum() * 0.1f), 0.1f * Time.deltaTime * 60);
             AttackMultiplicationText.text = "×" + multiplication.ToString("0.0");
-            if (mTime >= 2) { break; }
+            if (mTime >= 1) { break; }
             yield return null;
         }
 
+        // 総合戦闘力を更新する
         float time = 0;
         float power = BattleMoveBox.ButtleResult.AttackBasicCombatPower;
         while (true)
@@ -267,6 +291,7 @@ public class BattleWindowManager : MonoBehaviour
     // 防御側がサイコロを振って、戦闘力に計上する
     IEnumerator State06()
     {
+        // サイコロ画像を配置していく
         for (int i = 0; i < BattleMoveBox.ButtleResult.DefenceCommanderDice.Count; i++)
         {
             Image instance = Instantiate(DiceImagePrefab).GetComponent<Image>();
@@ -275,6 +300,7 @@ public class BattleWindowManager : MonoBehaviour
             DefenceDiceImageList.Add(instance);
         }
 
+        // サイコロの画像をシャッフルしているように更新する
         float endTime = 0;
         float randomTime = 0;
 
@@ -296,6 +322,13 @@ public class BattleWindowManager : MonoBehaviour
             }
         }
 
+        // サイコロの目を更新する
+        for (int i = 0; i < BattleMoveBox.ButtleResult.DefenceCommanderDice.Count; i++)
+        {
+            DefenceDiceImageList[i].sprite = DiceImage[BattleMoveBox.ButtleResult.DefenceCommanderDice[i] - 1];
+        }
+
+        // 係数を更新する
         float multiplication = 1.0f;
         float mTime = 0;
         while (true)
@@ -303,10 +336,11 @@ public class BattleWindowManager : MonoBehaviour
             mTime += Time.deltaTime;
             multiplication = Mathf.Lerp(multiplication, 1 + (BattleMoveBox.ButtleResult.DefenceCommanderDice.Sum() * 0.1f), 0.1f * Time.deltaTime * 60);
             DefenceMultiplicationText.text = multiplication.ToString("0.0") + "×";
-            if (mTime >= 2) { break; }
+            if (mTime >= 1) { break; }
             yield return null;
         }
 
+        // 総合戦闘力を更新する
         float time = 0;
         float power = BattleMoveBox.ButtleResult.DefenceBasicCombatPower;
         while (true)

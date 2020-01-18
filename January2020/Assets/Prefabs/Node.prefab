@@ -59,7 +59,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: fc57ad1cc8ee84e4f84eb7069a718972, type: 2}
+  - {fileID: 2100000, guid: 3b16f1901f99e734baff89a88780d038, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -92,9 +92,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b178a60bf9b7ba74db19f127ac7fe57d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CommanderPrefab: {fileID: 1466139401478247714, guid: 1b10e30b899a2744381357b1bf9f19ab,
+  CommanderPrefab: {fileID: 3479774594516843672, guid: 1b10e30b899a2744381357b1bf9f19ab,
     type: 3}
-  SoldierPrefab: {fileID: 1639240123805444336, guid: 43feeb50f6007ca49b56f0beeb385442,
+  SoldierPrefab: {fileID: 6981542376784977259, guid: 43feeb50f6007ca49b56f0beeb385442,
     type: 3}
   NodeMesh: {fileID: 6591504653238808176, guid: 8c9f6ac9363e3e744ac0a297c12b4931,
     type: 3}
@@ -122,6 +122,7 @@ MonoBehaviour:
     type: 2}
   Player04TowerMaterial: {fileID: 2100000, guid: e8eb36631a02b8d40a96ede30549bfe8,
     type: 2}
+  NoneMaterial: {fileID: 2100000, guid: 3b16f1901f99e734baff89a88780d038, type: 2}
 --- !u!65 &3980115432831330822
 BoxCollider:
   m_ObjectHideFlags: 0

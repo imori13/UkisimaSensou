@@ -23,6 +23,7 @@ public class Node : MonoBehaviour
     [SerializeField] Material Player04Material;
     [SerializeField] Material Player04BaseMaterial;
     [SerializeField] Material Player04TowerMaterial;
+    [SerializeField] Material NoneMaterial;
 
     public Color Normal_Color { get; set; }   // 国ごとの通常色
     public PlayerEnum PlayerEnum { get; set; } = PlayerEnum.None;
@@ -190,6 +191,7 @@ public class Node : MonoBehaviour
     {
         if (MeshRenderer == null) { MeshRenderer = GetComponent<MeshRenderer>(); }
         if (MeshFilter == null) { MeshFilter = GetComponent<MeshFilter>(); }
+        Material material = MeshRenderer.material;
         switch (PlayerEnum)
         {
             case PlayerEnum.Player01:
@@ -205,7 +207,7 @@ public class Node : MonoBehaviour
                     MeshFilter.mesh = NodeMesh;
                     MeshRenderer.material = Player01Material;
                 }
-                Normal_Color = Color.green;
+                Normal_Color = Color.white;
                 break;
             case PlayerEnum.Player02:
                 if (IsBaseNode)
@@ -262,8 +264,8 @@ public class Node : MonoBehaviour
                 break;
             case PlayerEnum.None:
                 MeshFilter.mesh = NodeMesh;
-                MeshRenderer.material = Player01Material;
-                Normal_Color = Color.gray;
+                MeshRenderer.material = NoneMaterial;
+                Normal_Color = Color.white;
                 break;
         }
 
@@ -273,6 +275,11 @@ public class Node : MonoBehaviour
             vec3.y = 0;
             transform.rotation = Quaternion.LookRotation(vec3, Vector3.up);
         }
+
+        if (!IsConnectMainBase)
+            Normal_Color *= 0.8f;
+
+        Destroy(material);
 
         if (GameManager != null && GameManager.SelectNode != null)
         {

@@ -33,8 +33,8 @@ public class BattleResult
         DefenceCommanderDice = new List<int>();
 
         // 基礎戦闘力を計算
-        AttackBasicCombatPower = (AttackSoldier + AttackCommander) * 1000;
-        DefenceBasicCombatPower = (DefenceSoldier + DefenceCommander) * 1000;
+        AttackBasicCombatPower = (AttackSoldier * 1000) + (AttackCommander * 1000);
+        DefenceBasicCombatPower = (DefenceSoldier * 1000) + (DefenceCommander * 1000);
 
         // 攻撃側防御側指揮官の数だけ ( 1 ~ 6 ) の目のダイスを振る
         for (int i = 0; i < AttackCommander; i++)

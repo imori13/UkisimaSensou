@@ -104,7 +104,7 @@ public class MapManager : MonoBehaviour
             instance.Map = this;
         }
 
-        PlayerBaseNode= PlayerBaseNode.OrderBy ( a => System.Guid.NewGuid () ).ToList ();
+        PlayerBaseNode = PlayerBaseNode.OrderBy(a => System.Guid.NewGuid()).ToList();
 
         StartCoroutine("CreateNodes");
         yield break;
@@ -329,86 +329,92 @@ public class MapManager : MonoBehaviour
             yield return null;
         }
 
-        int count = 0;
-        int breakCount = 0;
-        while (true)
+        for (int i = 0; i < PlayerBaseNode.Count; i++)
         {
-            List<Node>[] openNode = new List<Node>[PlayerCount];
-
-            for (int i = 0; i < PlayerCount; i++)
-            {
-                openNode[i] = new List<Node>();
-                openNode[i].Add(PlayerBaseNode[i]);
-            }
-
-            int num = 0;
-            while (MapNode.Any(n => n.PlayerEnum == PlayerEnum.None))
-            {
-                // もしプレイヤーがどこにも開けるノードがないなら、次のプレイヤーに見送ってスキップ
-                if (!openNode[num].Any(l => l.ConnectNode.Any(n => n.PlayerEnum == PlayerEnum.None)))
-                {
-                    num++;
-                    if (num >= PlayerCount) { num = 0; }
-                    continue;
-                }
-
-                // プレイヤーの開けるリストから、ランダムに一つ選ぶ
-                Node parentNode = openNode[num][Random.Range(0, openNode[num].Count)];
-                // もし接続先がないならスキップ
-                if (parentNode.ConnectNode.Count <= 0) continue;
-
-                // もし接続先に開けるノードがないなら、現在のノードをリストから外してスキップする
-                if (!parentNode.ConnectNode.Any(n => n.PlayerEnum == PlayerEnum.None))
-                {
-                    openNode[num].Remove(parentNode);
-                    continue;
-                }
-
-                // 接続先の中からランダムで一つ選ぶ
-                Node newNode = parentNode.ConnectNode[Random.Range(0, parentNode.ConnectNode.Count)];
-                if (newNode.PlayerEnum != PlayerEnum.None) continue;    // もしすでに誰かの領土ならスキップ
-
-                // 領土を占有
-                newNode.PlayerEnum = (PlayerEnum)num;
-                newNode.UpdateNodeColor();
-
-                count++;
-                if (count >= 1) { count = 0; yield return null; }
-
-                // リストに新しく開く場所を追加
-                openNode[num].Add(newNode);
-
-                // 接続先が全部開けなくなったらリストから削除
-                openNode[num].RemoveAll(n => !n.ConnectNode.Any(c => c.PlayerEnum == PlayerEnum.None));
-
-                // 次のプレイヤーに
-                num++;
-                if (num >= PlayerCount) { num = 0; }
-            }
-
-            breakCount++;
-            if (breakCount >= 4) { StartCoroutine("Initialize"); yield break; }
-
-            yield return null;
-
-            // もしどれかのプレイヤーのノード数が条件以下の数だったら
-            // または、だれかの本拠地の隣がすぐ敵陣地だったら、やり直す
-            // もう一度本拠地を決めるところから処理をやり直す
-            bool flag = false;
-            for (int i = 0; i < PlayerCount; i++)
-            {
-                // もしプレイヤーのノードの数が一定以下なら
-                if (MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count() <= MinPlayerNodeCount ||
-                    PlayerBaseNode[i].ConnectNode.Any(c => PlayerBaseNode[i].PlayerEnum != c.PlayerEnum))
-                {
-                    // 所属を初期化
-                    flag = true;
-                    MapNode.Where(n => !PlayerBaseNode.Contains(n)).ToList().ForEach(n => n.PlayerEnum = PlayerEnum.None);
-                    break;
-                }
-            }
-            if (!flag) { break; }
+            PlayerBaseNode[i].PlayerEnum = (PlayerEnum)i;
+            PlayerBaseNode[i].UpdateNodeColor();
         }
+
+        //int count = 0;
+        //int breakCount = 0;
+        //while (true)
+        //{
+        //    List<Node>[] openNode = new List<Node>[PlayerCount];
+
+        //    for (int i = 0; i < PlayerCount; i++)
+        //    {
+        //        openNode[i] = new List<Node>();
+        //        openNode[i].Add(PlayerBaseNode[i]);
+        //    }
+
+        //    int num = 0;
+        //    while (MapNode.Any(n => n.PlayerEnum == PlayerEnum.None))
+        //    {
+        //        // もしプレイヤーがどこにも開けるノードがないなら、次のプレイヤーに見送ってスキップ
+        //        if (!openNode[num].Any(l => l.ConnectNode.Any(n => n.PlayerEnum == PlayerEnum.None)))
+        //        {
+        //            num++;
+        //            if (num >= PlayerCount) { num = 0; }
+        //            continue;
+        //        }
+
+        //        // プレイヤーの開けるリストから、ランダムに一つ選ぶ
+        //        Node parentNode = openNode[num][Random.Range(0, openNode[num].Count)];
+        //        // もし接続先がないならスキップ
+        //        if (parentNode.ConnectNode.Count <= 0) continue;
+
+        //        // もし接続先に開けるノードがないなら、現在のノードをリストから外してスキップする
+        //        if (!parentNode.ConnectNode.Any(n => n.PlayerEnum == PlayerEnum.None))
+        //        {
+        //            openNode[num].Remove(parentNode);
+        //            continue;
+        //        }
+
+        //        // 接続先の中からランダムで一つ選ぶ
+        //        Node newNode = parentNode.ConnectNode[Random.Range(0, parentNode.ConnectNode.Count)];
+        //        if (newNode.PlayerEnum != PlayerEnum.None) continue;    // もしすでに誰かの領土ならスキップ
+
+        //        // 領土を占有
+        //        newNode.PlayerEnum = (PlayerEnum)num;
+        //        newNode.UpdateNodeColor();
+
+        //        count++;
+        //        if (count >= 1) { count = 0; yield return null; }
+
+        //        // リストに新しく開く場所を追加
+        //        openNode[num].Add(newNode);
+
+        //        // 接続先が全部開けなくなったらリストから削除
+        //        openNode[num].RemoveAll(n => !n.ConnectNode.Any(c => c.PlayerEnum == PlayerEnum.None));
+
+        //        // 次のプレイヤーに
+        //        num++;
+        //        if (num >= PlayerCount) { num = 0; }
+        //    }
+
+        //    breakCount++;
+        //    if (breakCount >= 4) { StartCoroutine("Initialize"); yield break; }
+
+        //    yield return null;
+
+        //    // もしどれかのプレイヤーのノード数が条件以下の数だったら
+        //    // または、だれかの本拠地の隣がすぐ敵陣地だったら、やり直す
+        //    // もう一度本拠地を決めるところから処理をやり直す
+        //    bool flag = false;
+        //    for (int i = 0; i < PlayerCount; i++)
+        //    {
+        //        // もしプレイヤーのノードの数が一定以下なら
+        //        if (MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count() <= MinPlayerNodeCount ||
+        //            PlayerBaseNode[i].ConnectNode.Any(c => PlayerBaseNode[i].PlayerEnum != c.PlayerEnum))
+        //        {
+        //            // 所属を初期化
+        //            flag = true;
+        //            MapNode.Where(n => !PlayerBaseNode.Contains(n)).ToList().ForEach(n => n.PlayerEnum = PlayerEnum.None);
+        //            break;
+        //        }
+        //    }
+        //    if (!flag) { break; }
+        //}
 
         MapNode.ForEach(n => n.UpdateNodeColor());
 
@@ -432,8 +438,8 @@ public class MapManager : MonoBehaviour
             float count = MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count();
             count = Mathf.Clamp(count, countMin, countMax);
 
-            float limitMax = 0.9f;
-            float limitMin = 0.5f;
+            float limitMax = 1.5f;
+            float limitMin = 0.25f;
             // (count-5) / (50-5) => [ 5/50 => 0/45 ] [ 50/50 => 45/45 ]
             float rate = (count - countMin) / (countMax - countMin);
             limit[i] = Mathf.Lerp(limitMax, limitMin, rate);
@@ -468,7 +474,7 @@ public class MapManager : MonoBehaviour
 
         // 兵士を生成
         // 本拠地に
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 1; i++)
         {
             if (PlayerBaseNode[(int)playerEnum].SoldierCount < 5)
             {

@@ -6,16 +6,16 @@ public class CameraController : MonoBehaviour
     Vector3 destVelocity;
 
     static readonly Vector3 clampMinPos = new Vector3(-100, 3, -100);
-    static readonly Vector3 clampMaxPos = new Vector3(100, 80, 100);
+    static readonly Vector3 clampMaxPos = new Vector3(100, 90, 100);
 
     void Start()
     {
-
+        Camera.main.depthTextureMode = DepthTextureMode.Depth;
     }
 
     void Update()
     {
-        float moveSpeed = 0.5f;
+        float moveSpeed = 1.25f;
         float updownSpeed = 0.75f;
 
         destVelocity = Vector3.zero;
@@ -27,14 +27,14 @@ public class CameraController : MonoBehaviour
 
         // 移動量を正規化
         destVelocity.Normalize();
-        destVelocity *= moveSpeed;
+        destVelocity *= moveSpeed * Time.deltaTime * 60;
 
         // 目標移動量を現在の移動量に線形補完を利用してイージング処理を行う
         velocity = Vector3.Lerp(velocity, destVelocity, 0.1f);
 
         // 上下移動
-        if (Input.GetAxis("Mouse ScrollWheel") > 0) { velocity += Vector3.down * updownSpeed; }
-        if (Input.GetAxis("Mouse ScrollWheel") < 0) { velocity += Vector3.up * updownSpeed; }
+        if (Input.GetAxis("Mouse ScrollWheel") > 0) { velocity += Vector3.down * updownSpeed * Time.deltaTime * 60; }
+        if (Input.GetAxis("Mouse ScrollWheel") < 0) { velocity += Vector3.up * updownSpeed * Time.deltaTime * 60; }
 
         // 移動量を座標に足す
         transform.position += velocity;

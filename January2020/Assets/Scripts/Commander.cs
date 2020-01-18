@@ -8,6 +8,13 @@ public class Commander : MonoBehaviour
 
     Vector3 prevPos;
 
+    [SerializeField] Material[] MaterialArray;
+    [SerializeField] SkinnedMeshRenderer SkinnedMeshRenderer;
+
+    void Start()
+    {
+    }
+
     void Update()
     {
         transform.localPosition = Vector3.Lerp(transform.localPosition, DestPosition, 0.1f * MyTime.time);
@@ -37,7 +44,12 @@ public class Commander : MonoBehaviour
         transform.SetParent(ParentNode.transform);
 
         // 座標を更新
-        DestPosition = (MyMath.CircleRandom(0.1f, 0.2f));
+        DestPosition = (MyMath.CircleRandom(0.5f,1.0f));
         transform.position = ParentNode.transform.position + DestPosition;
+
+        // マテリアルを更新
+        Material material = SkinnedMeshRenderer.material;
+        SkinnedMeshRenderer.material = MaterialArray[(int)ParentNode.PlayerEnum];
+        Destroy(material);
     }
 }
