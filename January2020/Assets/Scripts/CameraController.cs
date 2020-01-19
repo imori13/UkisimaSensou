@@ -2,6 +2,7 @@
 
 public class CameraController : MonoBehaviour
 {
+    [SerializeField] GameManager GameManager;
     Vector3 velocity;
     Vector3 destVelocity;
 
@@ -19,6 +20,7 @@ public class CameraController : MonoBehaviour
         float updownSpeed = 0.75f;
 
         destVelocity = Vector3.zero;
+
         // 移動処理
         if (Input.GetKey(KeyCode.W)) { destVelocity += Vector3.forward; }
         if (Input.GetKey(KeyCode.S)) { destVelocity += Vector3.back; }
@@ -37,7 +39,8 @@ public class CameraController : MonoBehaviour
         if (Input.GetAxis("Mouse ScrollWheel") < 0) { velocity += Vector3.up * updownSpeed * Time.deltaTime * 60; }
 
         // 移動量を座標に足す
-        transform.position += velocity;
+        if (!GameManager.IsEnd)
+            transform.position += velocity;
 
         // 座標を指定の範囲に制限する
         transform.position = new Vector3(

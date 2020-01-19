@@ -8,7 +8,7 @@ public class Soldier : MonoBehaviour
     public Vector3 DestPosition { get; set; }
 
     public Animator Animator { get; private set; }
-    
+
     Vector3 prevPos;
 
     [SerializeField] Material[] MaterialArray;
@@ -28,7 +28,9 @@ public class Soldier : MonoBehaviour
         {
             transform.rotation = Quaternion.LookRotation(vec3);
         }
-        
+
+        Animator.speed = MyTime.timeScale;
+
         prevPos = transform.position;
     }
 
@@ -47,7 +49,7 @@ public class Soldier : MonoBehaviour
         transform.SetParent(ParentNode.transform);
 
         // 座標を更新
-        DestPosition = (MyMath.CircleRandom(0.5f, 1.0f));
+        DestPosition = (ParentNode.IsBaseNode) ? (MyMath.CircleRandom(0.8f, 1.3f)) : (MyMath.CircleRandom(0.5f, 1.0f));
         transform.position = ParentNode.transform.position + DestPosition;
 
         // マテリアルを更新

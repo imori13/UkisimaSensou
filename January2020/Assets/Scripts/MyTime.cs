@@ -21,11 +21,11 @@ public sealed class MyTime : MonoBehaviour
     public void Update()
     {
         destTimeScale = 1f;
+        timeScale = Mathf.Lerp(timeScale, destTimeScale, 0.2f * Time.deltaTime * 60);
         if (Input.GetKey(KeyCode.Space) || IsTimeStop)
         {
-            destTimeScale = 0;
+            timeScale = 0;
         }
-        timeScale = Mathf.Lerp(timeScale, destTimeScale, 0.2f * Time.deltaTime * 60);
-        SlowFilter.color = new Color(SlowFilter.color.r, SlowFilter.color.g, SlowFilter.color.b, 1 - timeScale);
+        //SlowFilter.color = new Color(SlowFilter.color.r, SlowFilter.color.g, SlowFilter.color.b, 1 - timeScale);
     }
 }

@@ -11,8 +11,11 @@ public class Commander : MonoBehaviour
     [SerializeField] Material[] MaterialArray;
     [SerializeField] SkinnedMeshRenderer SkinnedMeshRenderer;
 
+    public Animator Animator { get; private set; }
+
     void Start()
     {
+        Animator = GetComponent<Animator>();
     }
 
     void Update()
@@ -27,6 +30,8 @@ public class Commander : MonoBehaviour
         }
 
         prevPos = transform.position;
+
+        Animator.speed = MyTime.timeScale;
     }
 
     public void UpdateNode(Node node)
@@ -44,7 +49,7 @@ public class Commander : MonoBehaviour
         transform.SetParent(ParentNode.transform);
 
         // 座標を更新
-        DestPosition = (MyMath.CircleRandom(0.5f,1.0f));
+        DestPosition = (ParentNode.IsBaseNode) ? (MyMath.CircleRandom(0.8f, 1.3f)) : (MyMath.CircleRandom(0.3f, 0.8f));
         transform.position = ParentNode.transform.position + DestPosition;
 
         // マテリアルを更新

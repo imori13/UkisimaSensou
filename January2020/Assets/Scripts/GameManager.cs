@@ -12,24 +12,31 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] GameObject StartMenu;
     [SerializeField] Text TimerText;
+    [SerializeField] Text FinishText;
 
-    float time;
+    float GamePlayTime;
 
     // 現在選択しているノード
     public Node SelectNode { get; set; }
     // ゲームが開始状態か否か
     public bool IsStart { get; private set; } = false;
+    public bool IsEnd { get; private set; } = false;
     // バトル画面管理
     public BattleWindowManager BattleWindowManager { get; private set; }
 
     bool timestop = false;
+
+    float[] thinkAttackTime = new float[MapManager.PlayerCount];
+    float[] thinkAttackLimit = new float[MapManager.PlayerCount];
+    float[] thinkMoveTime = new float[MapManager.PlayerCount];
+    float[] thinkMoveLimit = new float[MapManager.PlayerCount];
 
     void Start()
     {
         // 選択しているノードをnull
         SelectNode = null;
         TimerText.gameObject.SetActive(false);
-        time = 10;
+        GamePlayTime = 1000;
         BattleWindowManager = GetComponent<BattleWindowManager>();
     }
 
@@ -42,8 +49,7 @@ public class GameManager : MonoBehaviour
 
     void FixedUpdate()
     {
-        time -= (IsStart) ? (MyTime.deltaTime) : (0);
-        TimerText.text = "Time > " + time.ToString("00.00");
+        Timer();
         AttackAI();
         MoveAI();
     }
@@ -147,6 +153,8 @@ public class GameManager : MonoBehaviour
     {
         // ゲームがまだ開始してなかったらリターン
         if (!IsStart) { return; }
+        // ゲームが終了していたらリターン
+        if (IsEnd) { return; }
 
         // 左クリック
         if (Input.GetMouseButtonDown(0))
@@ -184,6 +192,8 @@ public class GameManager : MonoBehaviour
     {
         // ゲームがまだ開始してなかったらリターン
         if (!IsStart) { return; }
+        // ゲームが終了していたらリターン
+        if (IsEnd) { return; }
 
         // 右クリック
         if (Input.GetMouseButtonDown(1))
@@ -254,29 +264,40 @@ public class GameManager : MonoBehaviour
     {
         // ゲームがまだ開始してなかったらリターン
         if (!IsStart) { return; }
+        // ゲームが終了していたらリターン
+        if (IsEnd) { return; }
 
-        foreach (var node in Map.MapNode)
+        for (int i = 0; i < MapManager.PlayerCount; i++)
         {
-            foreach (var connect in node.ConnectNode)
+            thinkAttackTime[i] += MyTime.deltaTime;
+
+            if (thinkAttackTime[i] >= thinkAttackLimit[i])
             {
-                //if (node.PlayerEnum == PlayerEnum.Player01) continue;
-                if (node.PlayerEnum == connect.PlayerEnum) continue;
+                thinkAttackTime[i] = 0;
+                //thinkAttackLimit[i] = Random.Range(1f, 7f);
+                thinkAttackLimit[i] = Random.Range(0.1f, 0.25f);
 
-                //if (Random.Range(0, 50) != 0) continue;
-
-                // 攻撃側は今いる指揮官-1しか動かせないため、-1している
-                // が、、、攻撃不利で硬直状態なので防衛55で攻撃45でも攻撃するように調整
-                // 1~6の平均2.5が出たとして、有利か不利かで判断する
-                float character_count01 = node.Commander.Count + node.Soldier.Count;
-                float estimatedCombatPower01 = character_count01 * (1 + (node.Commander.Count) * 2.5f * 0.1f);
-
-                float character_count02 = connect.Commander.Count + connect.Soldier.Count;
-                float estimatedCombatPower02 = character_count02 * (1 + (connect.Commander.Count) * 2.5f * 0.1f);
-
-
-                if (estimatedCombatPower01 >= estimatedCombatPower02)
+                foreach (var node in Map.MapNode.Where(n => (n.PlayerEnum == (PlayerEnum)i && n.Commander.Count > 1 && n.Soldier.Count > 0)))
                 {
-                    Attack(node, connect);
+                    foreach (var connect in node.ConnectNode)
+                    {
+                        if (node.PlayerEnum == connect.PlayerEnum) continue;
+
+                        // 1~6の平均2.5が出たとして、有利か不利かで判断する
+                        float character_count01 = node.Commander.Count - 1 + node.Soldier.Count;
+                        float estimatedCombatPower01 = character_count01 * (1 + (node.Commander.Count - 1) * 2.5f * 0.1f);
+
+                        float character_count02 = connect.Commander.Count + connect.Soldier.Count;
+                        float estimatedCombatPower02 = character_count02 * (1 + (connect.Commander.Count) * 2.5f * 0.1f);
+
+
+                        if (estimatedCombatPower01 >= estimatedCombatPower02 || // 戦闘力が有利かどうか
+                            (node.Commander.Count + node.Soldier.Count) == (connect.Commander.Count + connect.Soldier.Count))   // お互い指揮官兵士55なら硬直するので、攻撃する
+                        {
+                            Attack(node, connect);
+                            return;
+                        }
+                    }
                 }
             }
         }
@@ -286,43 +307,54 @@ public class GameManager : MonoBehaviour
     {
         // ゲームがまだ開始してなかったらリターン
         if (!IsStart) { return; }
+        // ゲームが終了していたらリターン
+        if (IsEnd) { return; }
+
 
         for (int i = 0; i < MapManager.PlayerCount; i++)
         {
-            //if (i == (int)PlayerEnum.Player01) continue;
+            thinkMoveTime[i] += MyTime.deltaTime;
 
-            // 前線を追加
-            List<Node> frontNode = new List<Node>();
-            foreach (var node in Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
+            if (thinkMoveTime[i] >= thinkMoveLimit[i])
             {
-                if (node.ConnectNode.Any(c => node.PlayerEnum != c.PlayerEnum))
+                thinkMoveTime[i] = 0;
+                //thinkMoveLimit[i] = Random.Range(1f, 5f);
+                thinkMoveLimit[i] = Random.Range(0.1f,0.25f);
+
+                // 前線を追加
+                List<Node> frontNode = new List<Node>();
+                foreach (var node in Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i))
                 {
-                    if (!frontNode.Contains(node))
+                    if (node.ConnectNode.Any(c => node.PlayerEnum != c.PlayerEnum))
                     {
-                        frontNode.Add(node);
+                        if (!frontNode.Contains(node))
+                        {
+                            frontNode.Add(node);
+                        }
                     }
                 }
-            }
 
-            foreach (var node in Map.MapNode.Where(n => (n.PlayerEnum == (PlayerEnum)i && n.Soldier.Count > 0)))
-            {
-                //if (Random.Range(0, 5) != 0) continue;
+                foreach (var node in Map.MapNode.Where(n => (n.PlayerEnum == (PlayerEnum)i && n.Soldier.Count > 0)))
+                {
+                    // 違う領土ならスキップ
+                    if (node.PlayerEnum != (PlayerEnum)i) continue;
 
-                // 違う領土ならスキップ
-                if (node.PlayerEnum != (PlayerEnum)i) continue;
+                    // 前線のノードならスキップ
+                    if (frontNode.Contains(node)) continue;
 
-                // 前線のノードならスキップ
-                if (frontNode.Contains(node)) continue;
+                    // 前線のノードが存在しないならスキップ
+                    if (frontNode == null || frontNode.Count <= 0) continue;
 
-                // 前線のノードが存在しないならスキップ
-                if (frontNode == null || frontNode.Count <= 0) continue;
+                    // ルートを検索してリストに格納
+                    Node destNode = (frontNode.Count == 1) ? (frontNode[0]) : (frontNode[Random.Range(0, frontNode.Count)]);
+                    List<Node> route = SearchRoute(node, destNode);
 
-                // ルートを検索してリストに格納
-                Node destNode = (frontNode.Count == 1) ? (frontNode[0]) : (frontNode[Random.Range(0, frontNode.Count)]);
-                List<Node> route = SearchRoute(node, destNode);
-
-                if (route != null)
-                    Move(route[0], route[1], destNode);
+                    if (route != null)
+                    {
+                        Move(route[0], route[1], destNode);
+                        return;
+                    }
+                }
             }
         }
     }
@@ -340,13 +372,6 @@ public class GameManager : MonoBehaviour
         int count = 0;
         while (true)
         {
-            count++;
-            if (count >= 1000)
-            {
-                Debug.Log("無限ループっぽいので終了");
-                break;
-            }
-
             foreach (var connectNode in minCostNode.ConnectNode)
             {
                 // 接続先が違うプレイヤーの領土ならスキップ
@@ -356,6 +381,8 @@ public class GameManager : MonoBehaviour
 
                 // コストを計算して代入
                 float cost = minCostNode.Cost + Vector3.Distance(connectNode.transform.position, minCostNode.transform.position);
+                // もし選んだノードが兵士5以上いたら、コストを加算する
+                cost += (connectNode.Soldier.Count >= 5) ? (1000) : (0);
 
                 // コストを更新
                 if (connectNode.Cost == float.MaxValue || cost < connectNode.Cost)
@@ -436,11 +463,46 @@ public class GameManager : MonoBehaviour
 
     void Timer()
     {
+        // まだ開始状態じゃないならリターン
+        if (!IsStart) return;
+        // すでに終了していたらリターン
+        if (IsEnd) return;
 
+        // 時間をカウントダウン
+        GamePlayTime = Mathf.Max(0, (IsStart && !IsEnd) ? (GamePlayTime - MyTime.deltaTime) : (GamePlayTime));
+        TimerText.text = "Time > " + GamePlayTime.ToString("00.00");
+
+        // ゲームの終了条件
+        // 時間が0以下なら、またはプレイヤーの領土が0なら、またはすべて占領したら
+        if (GamePlayTime <= 0 || Map.MapNode.Count(n => n.PlayerEnum == PlayerEnum.Player01) <= 0 || Map.MapNode.All(n => n.PlayerEnum == PlayerEnum.Player01))
+        {
+            StartCoroutine("FinishGame");
+        }
     }
 
-    void FinishGame()
+    // 終了処理
+    IEnumerator FinishGame()
     {
+        IsEnd = true;
+        FinishText.gameObject.SetActive(true);
+        MyTime.IsTimeStop = true;
 
+        float time = 0;
+
+        while (true)
+        {
+            time += Time.deltaTime;
+            if (time >= 4)
+            {
+                TimerText.color = Color.Lerp(TimerText.color, Color.clear, 0.1f * Time.deltaTime * 60);
+                FinishText.color = Color.Lerp(FinishText.color, Color.clear, 0.1f * Time.deltaTime * 60);
+                Camera.main.transform.position = Vector3.Lerp(Camera.main.transform.position, new Vector3(0, 90, 0), 0.025f * Time.deltaTime * 60);
+                Camera.main.transform.rotation = Quaternion.Lerp(Camera.main.transform.rotation, Quaternion.LookRotation(-Vector3.up, Vector3.up), 0.025f * Time.deltaTime * 60);
+            }
+            yield return null;
+            //break;
+        }
+
+        yield break;
     }
 }

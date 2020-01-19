@@ -7,8 +7,9 @@ using UnityEngine.UI;
 public class BattleWindowManager : MonoBehaviour
 {
     // prefab
-    [SerializeField] GameObject CommanderBattlePrefab;
-    [SerializeField] GameObject SoldierBattlePrefab;
+    [SerializeField] BattleCommander CommanderBattlePrefab;
+    [SerializeField] BattleSoldier SoldierBattlePrefab;
+    [SerializeField] GameObject ExplosionParticlePrefab;
 
     [SerializeField] GameObject BattleCamera;
     [SerializeField] Text AttackCombatPowerText;
@@ -18,12 +19,14 @@ public class BattleWindowManager : MonoBehaviour
     [SerializeField] Sprite[] DiceImage;
     [SerializeField] GameObject DiceUI;
     [SerializeField] Image DiceImagePrefab;
+    [SerializeField] Image AttackBackImage;
+    [SerializeField] Image DefenceBackImage;
     [SerializeField] Material[] SoldierMaterials;
     [SerializeField] Material[] CommanderMaterials;
-    List<GameObject> attackBattleSoldier = new List<GameObject>();
-    List<GameObject> attackBattleCommander = new List<GameObject>();
-    List<GameObject> defenceBattleSoldier = new List<GameObject>();
-    List<GameObject> defenceBattleCommander = new List<GameObject>();
+    List<BattleSoldier> attackBattleSoldier = new List<BattleSoldier>();
+    List<BattleCommander> attackBattleCommander = new List<BattleCommander>();
+    List<BattleSoldier> defenceBattleSoldier = new List<BattleSoldier>();
+    List<BattleCommander> defenceBattleCommander = new List<BattleCommander>();
     List<Image> AttackDiceImageList = new List<Image>();
     List<Image> DefenceDiceImageList = new List<Image>();
 
@@ -35,6 +38,10 @@ public class BattleWindowManager : MonoBehaviour
     void Start()
     {
         BattleCamera.SetActive(false);
+        AttackBackImage.gameObject.SetActive(false);
+        DefenceBackImage.gameObject.SetActive(false);
+        AttackBackImage.color = Color.clear;
+        DefenceBackImage.color = Color.clear;
         AttackCombatPowerText.text = "";
         DefenceCombatPowerText.text = "";
         AttackMultiplicationText.text = "";
@@ -58,12 +65,12 @@ public class BattleWindowManager : MonoBehaviour
         for (int i = 0; i < BattleMoveBox.Soldier.Count; i++)
         {
             int count = BattleMoveBox.Soldier.Count;
-            GameObject instance = Instantiate(SoldierBattlePrefab);
-            instance.transform.position = BATTLE_POS + new Vector3(-4, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
+            BattleSoldier instance = Instantiate(SoldierBattlePrefab);
+            instance.transform.position = BATTLE_POS + new Vector3(-5, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
             instance.transform.Rotate(0, 90, 0);
             instance.transform.localScale = Vector3.zero;
-            Material material = instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material;
-            instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material = SoldierMaterials[(int)BattleMoveBox.PlayerEnum];
+            Material material = instance.SkinnedMeshRenderer.material;
+            instance.SkinnedMeshRenderer.material = SoldierMaterials[(int)BattleMoveBox.PlayerEnum];
             Destroy(material);
             attackBattleSoldier.Add(instance);
         }
@@ -71,12 +78,12 @@ public class BattleWindowManager : MonoBehaviour
         for (int i = 0; i < BattleMoveBox.Commander.Count; i++)
         {
             int count = BattleMoveBox.Commander.Count;
-            GameObject instance = Instantiate(CommanderBattlePrefab);
-            instance.transform.position = BATTLE_POS + new Vector3(-6, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
+            BattleCommander instance = Instantiate(CommanderBattlePrefab);
+            instance.transform.position = BATTLE_POS + new Vector3(-8, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
             instance.transform.Rotate(0, 90, 0);
             instance.transform.localScale = Vector3.zero;
-            Material material = instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material;
-            instance.GetComponent<BattleCommander>().SkinnedMeshRenderer.material = CommanderMaterials[(int)BattleMoveBox.PlayerEnum];
+            Material material = instance.SkinnedMeshRenderer.material;
+            instance.SkinnedMeshRenderer.material = CommanderMaterials[(int)BattleMoveBox.PlayerEnum];
             Destroy(material);
             attackBattleCommander.Add(instance);
         }
@@ -85,12 +92,12 @@ public class BattleWindowManager : MonoBehaviour
         for (int i = 0; i < BattleMoveBox.Node2.Soldier.Count; i++)
         {
             int count = BattleMoveBox.Node2.Soldier.Count;
-            GameObject instance = Instantiate(SoldierBattlePrefab);
-            instance.transform.position = BATTLE_POS + new Vector3(4, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
+            BattleSoldier instance = Instantiate(SoldierBattlePrefab);
+            instance.transform.position = BATTLE_POS + new Vector3(2, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
             instance.transform.Rotate(0, -90, 0);
             instance.transform.localScale = Vector3.zero;
-            Material material = instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material;
-            instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material = SoldierMaterials[(int)BattleMoveBox.Node2.PlayerEnum];
+            Material material = instance.SkinnedMeshRenderer.material;
+            instance.SkinnedMeshRenderer.material = SoldierMaterials[(int)BattleMoveBox.Node2.PlayerEnum];
             Destroy(material);
             defenceBattleSoldier.Add(instance);
         }
@@ -98,15 +105,17 @@ public class BattleWindowManager : MonoBehaviour
         for (int i = 0; i < BattleMoveBox.Node2.Commander.Count; i++)
         {
             int count = BattleMoveBox.Node2.Commander.Count;
-            GameObject instance = Instantiate(CommanderBattlePrefab);
-            instance.transform.position = BATTLE_POS + new Vector3(6, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
+            BattleCommander instance = Instantiate(CommanderBattlePrefab);
+            instance.transform.position = BATTLE_POS + new Vector3(5, 0, (i - (count * 0.5f) + 0.5f) * 1.5f);
             instance.transform.Rotate(0, -90, 0);
             instance.transform.localScale = Vector3.zero;
-            Material material = instance.GetComponent<BattleSoldier>().SkinnedMeshRenderer.material;
-            instance.GetComponent<BattleCommander>().SkinnedMeshRenderer.material = CommanderMaterials[(int)BattleMoveBox.Node2.PlayerEnum];
+            Material material = instance.SkinnedMeshRenderer.material;
+            instance.SkinnedMeshRenderer.material = CommanderMaterials[(int)BattleMoveBox.Node2.PlayerEnum];
             Destroy(material);
             defenceBattleCommander.Add(instance);
         }
+
+        attackBattleSoldier.ForEach(s => s.Animator.SetBool("SoldierRun", true));
 
         StartCoroutine("State01");
     }
@@ -120,7 +129,9 @@ public class BattleWindowManager : MonoBehaviour
         {
             time += Time.deltaTime;
 
-            if (time >= 1) { break; }
+
+
+            if (time >= ((BattleMoveBox.Node1.PlayerEnum == PlayerEnum.Player01) ? (0) : (1))) { break; }
 
             yield return null;
         }
@@ -138,7 +149,7 @@ public class BattleWindowManager : MonoBehaviour
         {
             time += Time.deltaTime;
 
-            if (time >= 0.25f) { break; }
+            if (time >= 0.0f) { break; }
 
             yield return null;
         }
@@ -148,32 +159,79 @@ public class BattleWindowManager : MonoBehaviour
         yield break;
     }
 
-    // 攻撃側キャラクターが出現する、戦闘力UIが出現する
+    // 攻撃側キャラクターと防御側キャラクターが出現して、戦闘力UIが出現する
     IEnumerator State03()
     {
         Vector3 scale = Vector3.zero;
         float time = 0;
-        float power = 0;
+        float power1 = 0;
+        float power2 = 0;
 
         AttackMultiplicationText.text = "×1.0";
+        DefenceMultiplicationText.text = "1.0×";
+
+        AttackBackImage.gameObject.SetActive(true);
+        DefenceBackImage.gameObject.SetActive(true);
+
+        float[] sRate = new float[attackBattleSoldier.Count];
+        for (int i = 0; i < sRate.Length; i++)
+        {
+            sRate[i] = Random.Range(0.075f, 0.2f);
+        }
+        float[] cRate = new float[attackBattleCommander.Count];
+        for (int i = 0; i < cRate.Length; i++)
+        {
+            cRate[i] = Random.Range(0.075f, 0.2f);
+        }
 
         while (true)
         {
             scale = Vector3.Lerp(scale, Vector3.one * 0.33f, 0.2f * Time.deltaTime * 60);
 
+            AttackBackImage.color = Color.Lerp(AttackBackImage.color, new Color(50, 50, 50, 190) / 255f, 0.1f * Time.deltaTime * 60);
+            DefenceBackImage.color = Color.Lerp(DefenceBackImage.color, new Color(50, 50, 50, 190) / 255f, 0.1f * Time.deltaTime * 60);
+
+            // 攻撃側
             attackBattleSoldier.ForEach(s => s.transform.localScale = scale);
             attackBattleCommander.ForEach(c => c.transform.localScale = scale);
 
-            power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.AttackBasicCombatPower, 0.2f * Time.deltaTime * 60);
-            AttackCombatPowerText.text = Mathf.RoundToInt(power).ToString();
+            // 攻撃側兵士
+            for (int i = 0; i < attackBattleSoldier.Count; i++)
+            {
+                int count = attackBattleSoldier.Count;
+                attackBattleSoldier[i].transform.position = Vector3.Lerp(attackBattleSoldier[i].transform.position, BATTLE_POS + new Vector3(-2, 0, (i - (count * 0.5f) + 0.5f) * 1.5f), sRate[i] * Time.deltaTime * 60);
+            }
+            // 攻撃側指揮官
+            for (int i = 0; i < attackBattleCommander.Count; i++)
+            {
+                int count = attackBattleCommander.Count;
+                attackBattleCommander[i].transform.position = Vector3.Lerp(attackBattleCommander[i].transform.position, BATTLE_POS + new Vector3(-5, 0, (i - (count * 0.5f) + 0.5f) * 1.5f), cRate[i] * Time.deltaTime * 60);
+            }
 
-            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.AttackBasicCombatPower)
+            power1 = Mathf.Lerp(power1, BattleMoveBox.ButtleResult.AttackBasicCombatPower, 0.2f * Time.deltaTime * 60);
+            AttackCombatPowerText.text = Mathf.RoundToInt(power1).ToString();
+
+            // 防衛側
+            defenceBattleSoldier.ForEach(s => s.transform.localScale = scale);
+            defenceBattleCommander.ForEach(c => c.transform.localScale = scale);
+
+            power2 = Mathf.Lerp(power2, BattleMoveBox.ButtleResult.DefenceBasicCombatPower, 0.2f * Time.deltaTime * 60);
+            DefenceCombatPowerText.text = Mathf.RoundToInt(power2).ToString();
+
+            if (Mathf.RoundToInt(power1) == BattleMoveBox.ButtleResult.AttackBasicCombatPower &&
+                Mathf.RoundToInt(power2) == BattleMoveBox.ButtleResult.DefenceBasicCombatPower)
             {
                 time += Time.deltaTime;
 
                 if (time >= 0.1f) { break; }
             }
             yield return null;
+        }
+
+        foreach (var s in attackBattleSoldier)
+        {
+            s.Animator.SetBool("SoldierRun", false);
+            yield return new WaitForSeconds(Random.Range(0.075f, 0.15f));
         }
 
         yield return null;
@@ -181,36 +239,9 @@ public class BattleWindowManager : MonoBehaviour
         yield break;
     }
 
-    // 防御側キャラクターが出現して、戦闘力UIが出現する
+    // あとで消す
     IEnumerator State04()
     {
-        Vector3 scale = Vector3.zero;
-        float time = 0;
-        float power = 0;
-
-        DefenceMultiplicationText.text = "1.0×";
-
-        while (true)
-        {
-            scale = Vector3.Lerp(scale, Vector3.one * 0.33f, 0.2f * Time.deltaTime * 60);
-
-            defenceBattleSoldier.ForEach(s => s.transform.localScale = scale);
-            defenceBattleCommander.ForEach(c => c.transform.localScale = scale);
-
-            power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.DefenceBasicCombatPower, 0.2f * Time.deltaTime * 60);
-            DefenceCombatPowerText.text = Mathf.RoundToInt(power).ToString();
-
-            if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.DefenceBasicCombatPower)
-            {
-                time += Time.deltaTime;
-
-                if (time >= 0.1f) { break; }
-            }
-            yield return null;
-        }
-
-
-        yield return null;
         StartCoroutine("State05");
         yield break;
     }
@@ -223,7 +254,7 @@ public class BattleWindowManager : MonoBehaviour
         {
             Image instance = Instantiate(DiceImagePrefab).GetComponent<Image>();
             instance.transform.SetParent(DiceUI.transform);
-            instance.transform.localPosition = Vector3.left * 250 - new Vector3(i * 110, 0, 0);
+            instance.transform.localPosition = Vector3.left * 100 - new Vector3(i * 65, 0, 0);
             AttackDiceImageList.Add(instance);
         }
 
@@ -254,6 +285,13 @@ public class BattleWindowManager : MonoBehaviour
             AttackDiceImageList[i].sprite = DiceImage[BattleMoveBox.ButtleResult.AttackCommanderDice[i] - 1];
         }
 
+        attackBattleCommander = attackBattleCommander.OrderBy(a => System.Guid.NewGuid()).ToList();
+        foreach (var c in attackBattleCommander)
+        {
+            c.Animator.SetTrigger("CommanderAttack");
+            yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
+        }
+
         // 係数を更新する
         float multiplication = 1.0f;
         float mTime = 0;
@@ -273,6 +311,7 @@ public class BattleWindowManager : MonoBehaviour
         {
             power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.AttackTotalCombatPower, 0.2f * Time.deltaTime * 60);
             AttackCombatPowerText.text = Mathf.Round(power).ToString();
+            AttackCombatPowerText.color = Color.Lerp(AttackCombatPowerText.color, new Color(255, 255, 100, 255) / 255f, 0.2f * Time.deltaTime * 60);
 
             if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.AttackTotalCombatPower)
             {
@@ -296,7 +335,7 @@ public class BattleWindowManager : MonoBehaviour
         {
             Image instance = Instantiate(DiceImagePrefab).GetComponent<Image>();
             instance.transform.SetParent(DiceUI.transform);
-            instance.transform.localPosition = Vector3.right * 250 + new Vector3(i * 110, 0, 0);
+            instance.transform.localPosition = Vector3.right * 100 + new Vector3(i * 65, 0, 0);
             DefenceDiceImageList.Add(instance);
         }
 
@@ -328,6 +367,13 @@ public class BattleWindowManager : MonoBehaviour
             DefenceDiceImageList[i].sprite = DiceImage[BattleMoveBox.ButtleResult.DefenceCommanderDice[i] - 1];
         }
 
+        defenceBattleCommander = defenceBattleCommander.OrderBy(a => System.Guid.NewGuid()).ToList();
+        foreach (var c in defenceBattleCommander)
+        {
+            c.Animator.SetTrigger("CommanderAttack");
+            yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
+        }
+
         // 係数を更新する
         float multiplication = 1.0f;
         float mTime = 0;
@@ -347,12 +393,13 @@ public class BattleWindowManager : MonoBehaviour
         {
             power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.DefenceTotalCombatPower, 0.2f * Time.deltaTime * 60);
             DefenceCombatPowerText.text = Mathf.RoundToInt(power).ToString();
+            DefenceCombatPowerText.color = Color.Lerp(DefenceCombatPowerText.color, new Color(255, 255, 100, 255) / 255f,0.2f*Time.deltaTime*60);
 
             if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.DefenceTotalCombatPower)
             {
                 time += Time.deltaTime;
 
-                if (time >= 2f) { break; }
+                if (time >= 0.2f) { break; }
             }
             yield return null;
         }
@@ -369,48 +416,99 @@ public class BattleWindowManager : MonoBehaviour
 
         if (attackWin)
         {
-            defenceBattleSoldier.ForEach(s => Destroy(s));
-            defenceBattleCommander.ForEach(c => Destroy(c));
+            attackBattleSoldier = attackBattleSoldier.OrderBy(a => System.Guid.NewGuid()).ToList();
+            foreach (var s in attackBattleSoldier)
+            {
+                s.Animator.SetTrigger("SoldierAttack");
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
+            }
         }
         else
         {
-            attackBattleSoldier.ForEach(s => Destroy(s));
-            attackBattleCommander.ForEach(c => Destroy(c));
+            defenceBattleSoldier = defenceBattleSoldier.OrderBy(a => System.Guid.NewGuid()).ToList();
+            foreach (var s in defenceBattleSoldier)
+            {
+                s.Animator.SetTrigger("SoldierAttack");
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
+            }
         }
 
-        float time = 0;
-
+        float time1 = 0;
         while (true)
         {
-            time += Time.deltaTime;
+            time1 += Time.deltaTime;
 
-            if (attackWin)
-            {
-                attackBattleSoldier.ForEach(s => s.transform.position = Vector3.Lerp(s.transform.position, BATTLE_POS + Vector3.right * 3, 0.1f * Time.deltaTime * 60));
-                attackBattleCommander.ForEach(c => c.transform.position = Vector3.Lerp(c.transform.position, BATTLE_POS + Vector3.right * 3, 0.1f * Time.deltaTime * 60));
-            }
-            else
-            {
-                defenceBattleSoldier.ForEach(s => s.transform.position = Vector3.Lerp(s.transform.position, BATTLE_POS + Vector3.left * 3, 0.1f * Time.deltaTime * 60));
-                defenceBattleCommander.ForEach(c => c.transform.position = Vector3.Lerp(c.transform.position, BATTLE_POS + Vector3.left * 3, 0.1f * Time.deltaTime * 60));
-            }
 
             yield return null;
-            if (time >= 1) { break; }
+            if (time1 >= 1f) { break; }
+        }
+
+
+        if (attackWin)
+        {
+            defenceBattleSoldier = defenceBattleSoldier.OrderBy(a => System.Guid.NewGuid()).ToList();
+            foreach (var s in defenceBattleSoldier)
+            {
+                Instantiate(ExplosionParticlePrefab, s.transform.position, ExplosionParticlePrefab.transform.rotation);
+                Destroy(s.SkinnedMeshRenderer.material);
+                Destroy(s.gameObject);
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.25f));
+            }
+
+            defenceBattleCommander = defenceBattleCommander.OrderBy(a => System.Guid.NewGuid()).ToList();
+            foreach (var c in defenceBattleCommander)
+            {
+                Instantiate(ExplosionParticlePrefab, c.transform.position, ExplosionParticlePrefab.transform.rotation);
+                Destroy(c.SkinnedMeshRenderer.material);
+                Destroy(c.gameObject);
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.25f));
+            }
+        }
+        else
+        {
+            attackBattleSoldier = attackBattleSoldier.OrderBy(a => System.Guid.NewGuid()).ToList();
+            foreach (var s in attackBattleSoldier)
+            {
+                Instantiate(ExplosionParticlePrefab, s.transform.position, ExplosionParticlePrefab.transform.rotation);
+                Destroy(s.SkinnedMeshRenderer.material);
+                Destroy(s.gameObject);
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.25f));
+            }
+
+            attackBattleCommander = attackBattleCommander.OrderBy(a => System.Guid.NewGuid()).ToList();
+            foreach (var c in attackBattleCommander)
+            {
+                Instantiate(ExplosionParticlePrefab, c.transform.position, ExplosionParticlePrefab.transform.rotation);
+                Destroy(c.SkinnedMeshRenderer.material);
+                Destroy(c.gameObject);
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.25f));
+            }
+        }
+
+        float time2 = 0;
+        while (true)
+        {
+            time2 += Time.deltaTime;
+
+            yield return null;
+            if (time2 >= 1) { break; }
         }
 
         if (attackWin)
         {
-            attackBattleSoldier.ForEach(s => Destroy(s));
-            attackBattleCommander.ForEach(c => Destroy(c));
+            attackBattleSoldier.ForEach(s => Destroy(s.SkinnedMeshRenderer.material));
+            attackBattleSoldier.ForEach(s => Destroy(s.gameObject));
+            attackBattleCommander.ForEach(c => Destroy(c.SkinnedMeshRenderer.material));
+            attackBattleCommander.ForEach(c => Destroy(c.gameObject));
         }
         else
         {
-            defenceBattleSoldier.ForEach(s => Destroy(s));
-            defenceBattleCommander.ForEach(c => Destroy(c));
+            defenceBattleSoldier.ForEach(s => Destroy(s.SkinnedMeshRenderer.material));
+            defenceBattleSoldier.ForEach(s => Destroy(s.gameObject));
+            defenceBattleCommander.ForEach(c => Destroy(c.SkinnedMeshRenderer.material));
+            defenceBattleCommander.ForEach(c => Destroy(c.gameObject));
         }
 
-        yield return null;
         StartCoroutine("State08");
         yield break;
     }
@@ -419,9 +517,16 @@ public class BattleWindowManager : MonoBehaviour
     IEnumerator State08()
     {
         BattleCamera.SetActive(false);
-
+        AttackBackImage.gameObject.SetActive(false);
+        DefenceBackImage.gameObject.SetActive(false);
+        AttackBackImage.color = Color.clear;
+        DefenceBackImage.color = Color.clear;
         AttackCombatPowerText.text = "";
+        AttackCombatPowerText.color = Color.white;
         DefenceCombatPowerText.text = "";
+        DefenceCombatPowerText.color = Color.white;
+        AttackMultiplicationText.text = "";
+        DefenceMultiplicationText.text = "";
         AttackDiceImageList.ForEach(d => Destroy(d.gameObject));
         AttackDiceImageList.Clear();
         DefenceDiceImageList.ForEach(d => Destroy(d.gameObject));

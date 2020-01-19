@@ -30,8 +30,10 @@ public class MapManager : MonoBehaviour
     static readonly int RemoveLineDistance = 5;
 
     public List<Node> PlayerBaseNode { get; private set; } = new List<Node>();  // 各プレイヤーの本拠地
-    float[] time = new float[PlayerCount];
-    float[] limit = new float[PlayerCount];
+    float[] cGeneTime = new float[PlayerCount];
+    float[] cGeneLimit = new float[PlayerCount];
+    float[] sGeneTime = new float[PlayerCount];
+    float[] sGeneLimit = new float[PlayerCount];
 
     public GameManager GameManager { get; private set; }
 
@@ -66,6 +68,7 @@ public class MapManager : MonoBehaviour
         {
             count++;
             if (count >= 3) { count = 0; yield return null; }
+            Destroy(road.GetComponent<MeshRenderer>().material);
             Destroy(road.gameObject);
         }
         MapRoad.Clear();
@@ -75,6 +78,7 @@ public class MapManager : MonoBehaviour
         {
             count++;
             if (count >= 3) { count = 0; yield return null; }
+            Destroy(node.MeshRenderer.material);
             Destroy(node.gameObject);
         }
         MapNode.Clear();
@@ -86,9 +90,9 @@ public class MapManager : MonoBehaviour
             Node instance = Instantiate(Node);
 
             float f = i / (float)PlayerCount;
-            float rad = (Random.Range(-25f, 25f) + 360f * f) * Mathf.Deg2Rad;
+            float rad = (Random.Range(-15f, 15f) + (360f * f) + 45f) * Mathf.Deg2Rad;
             Vector3 vec3 = new Vector3(Mathf.Cos(rad), 0, Mathf.Sin(rad));
-            vec3 *= Random.Range(40f, 70f);
+            vec3 *= Random.Range(50f, 60f);
 
             instance.transform.position = vec3;
 
@@ -145,6 +149,7 @@ public class MapManager : MonoBehaviour
                 if (Vector3.Magnitude(MyMath.ConversionVector2(instance.transform.position) - MyMath.ConversionVector2(node.transform.position)) <= ((instance.Scale + node.Scale + 4) / 2f) ||
                     MapRoad.Any(r => MyMath.IsLineIntersectedCircle(r.PosS, r.PosE, MyMath.ConversionVector2(instance.transform.position), RemoveLineDistance)))
                 {
+                    Destroy(instance.GetComponent<MeshRenderer>().material);
                     Destroy(instance.gameObject);
                     flag = true;
                     break;
@@ -212,6 +217,7 @@ public class MapManager : MonoBehaviour
                 {
                     if (MyMath.JudgeIentersected(road.PosS, road.PosE, r.PosS, r.PosE))
                     {
+                        Destroy(road.GetComponent<MeshRenderer>().material);
                         Destroy(road.gameObject);
                         flag1 = true;
                         continue;
@@ -228,8 +234,8 @@ public class MapManager : MonoBehaviour
                     bool flag = MyMath.IsLineIntersectedCircle(road.PosS, road.PosE, MyMath.ConversionVector2(node.transform.position), RemoveLineDistance);
                     if (!flag) continue;
 
-                    road.GetComponent<Renderer>().material.color = Color.red;
                     flag2 = true;
+                    Destroy(road.GetComponent<MeshRenderer>().material);
                     Destroy(road.gameObject);
                     break;
                 }
@@ -277,6 +283,7 @@ public class MapManager : MonoBehaviour
                 else
                 {
                     node.ConnectRoad.ForEach(r => { r.RemoveFlag = true; });
+                    Destroy(node.GetComponent<MeshRenderer>().material);
                     Destroy(node.gameObject);
                 }
 
@@ -287,7 +294,7 @@ public class MapManager : MonoBehaviour
         MapNode.RemoveAll(n => (!OpenList.Contains(n) && !n.IsBaseNode));
 
         // 孤立した道を削除
-        MapRoad.ForEach(r => { if (r.RemoveFlag) { Destroy(r.gameObject); } });
+        MapRoad.ForEach(r => { if (r.RemoveFlag) { Destroy(r.GetComponent<MeshRenderer>().material); Destroy(r.gameObject); } });
         MapRoad.RemoveAll(m => m.RemoveFlag);
 
         // もう一度処理を行う
@@ -428,31 +435,51 @@ public class MapManager : MonoBehaviour
     {
         // まだゲームが開始状態じゃなかったらリターン
         if (!GameManager.IsStart) return;
+        // ゲームが終了していたらリターン
+        if (GameManager.IsEnd) { return; }
+
 
         for (int i = 0; i < PlayerCount; i++)
         {
-            time[i] += MyTime.deltaTime;
+            cGeneTime[i] += MyTime.deltaTime;
+            sGeneTime[i] += MyTime.deltaTime;
 
             float countMax = 50;
             float countMin = 5;
             float count = MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count();
             count = Mathf.Clamp(count, countMin, countMax);
 
-            float limitMax = 1.5f;
-            float limitMin = 0.25f;
+            // 指揮官生成
+            //float cGeneLimitMax = 3f;
+            //float cGeneLimitMin = 2.5f;
+            float cGeneLimitMax = 1f;
+            float cGeneLimitMin = 0.5f;
             // (count-5) / (50-5) => [ 5/50 => 0/45 ] [ 50/50 => 45/45 ]
-            float rate = (count - countMin) / (countMax - countMin);
-            limit[i] = Mathf.Lerp(limitMax, limitMin, rate);
+            float cGeneRate = (count - countMin) / (countMax - countMin);
+            cGeneLimit[i] = Mathf.Lerp(cGeneLimitMax, cGeneLimitMin, cGeneRate);
 
-            if (time[i] >= limit[i])
+            if (cGeneTime[i] >= cGeneLimit[i])
             {
-                time[i] = 0;
-                CreateChara((PlayerEnum)i);
+                cGeneTime[i] = 0;
+                CreateCommander((PlayerEnum)i);
+            }
+
+            //float sGeneLimitMax = 2.5f;
+            //float sGeneLimitMin = 0.75f;
+            float sGeneLimitMax = 1f;
+            float sGeneLimitMin = 0.5f;
+            // (count-5) / (50-5) => [ 5/50 => 0/45 ] [ 50/50 => 45/45 ]
+            float sGeneRate = (count - countMin) / (countMax - countMin);
+            sGeneLimit[i] = Mathf.Lerp(sGeneLimitMax, sGeneLimitMin, sGeneRate);
+            if (sGeneTime[i] >= sGeneLimit[i])
+            {
+                sGeneTime[i] = 0;
+                CreateSoldier((PlayerEnum)i);
             }
         }
     }
 
-    void CreateChara(PlayerEnum playerEnum)
+    void CreateCommander(PlayerEnum playerEnum)
     {
         if (PlayerBaseNode[(int)playerEnum] == null) return;
 
@@ -472,6 +499,12 @@ public class MapManager : MonoBehaviour
             commander.UpdateNode(node1);
         }
 
+    }
+
+    void CreateSoldier(PlayerEnum playerEnum)
+    {
+        if (PlayerBaseNode[(int)playerEnum] == null) return;
+
         // 兵士を生成
         // 本拠地に
         for (int i = 0; i < 1; i++)
@@ -483,21 +516,6 @@ public class MapManager : MonoBehaviour
                 soldier1.UpdateNode(PlayerBaseNode[(int)playerEnum]);
             }
         }
-
-        //// 自分の領土ランダムに一体
-        //List<Node> list2 = MapNode.Where(n =>
-        //{
-        //    // 自分の所属ノードかつ、そのノードのキャラのカウントが一定以下なら
-        //    return (n.PlayerEnum == playerEnum && n.SoldierCount < 5 && n.IsConnectMainBase);
-        //}).ToList();
-
-        //if (list2.Count > 0)
-        //{
-        //    Soldier soldier2 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
-        //    Node node2 = list2[Random.Range(0, list2.Count)];
-        //    node2.Soldier.Add(soldier2);
-        //    soldier2.UpdateNode(node2);
-        //}
     }
 
     public void AllUpdateNodeColor()

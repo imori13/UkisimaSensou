@@ -93,12 +93,12 @@ public class MoveBox : MonoBehaviour
         ButtleResult = new BattleResult();
         ButtleResult.Battle(this);
 
-        // もしプレイヤーと関係のあるバトルだった場合
-        //if (Node1.PlayerEnum == PlayerEnum.Player01 || Node2.PlayerEnum == PlayerEnum.Player01)
-        //{
-        //    BattleWindowManager.Initialize(this);
-        //    return;
-        //}
+        // 相手が無所属でないかつ、もしプレイヤーと関係のあるバトルだった場合
+        if (Node2.PlayerEnum != PlayerEnum.None && (Node1.PlayerEnum == PlayerEnum.Player01 || Node2.PlayerEnum == PlayerEnum.Player01))
+        {
+            BattleWindowManager.Initialize(this);
+            return;
+        }
 
         if (ButtleResult.AttackTotalCombatPower >= ButtleResult.DefenceTotalCombatPower)
             AttackWin();
