@@ -11,6 +11,7 @@ public class BattleWindowManager : MonoBehaviour
     [SerializeField] BattleSoldier SoldierBattlePrefab;
     [SerializeField] GameObject ExplosionParticlePrefab;
 
+    [SerializeField] GameObject BattleCameraBackImage;
     [SerializeField] GameObject BattleCamera;
     [SerializeField] Text AttackCombatPowerText;
     [SerializeField] Text DefenceCombatPowerText;
@@ -38,6 +39,7 @@ public class BattleWindowManager : MonoBehaviour
     void Start()
     {
         BattleCamera.SetActive(false);
+        BattleCameraBackImage.SetActive(false);
         AttackBackImage.gameObject.SetActive(false);
         DefenceBackImage.gameObject.SetActive(false);
         AttackBackImage.color = Color.clear;
@@ -114,8 +116,11 @@ public class BattleWindowManager : MonoBehaviour
             Destroy(material);
             defenceBattleCommander.Add(instance);
         }
-
+        
         attackBattleSoldier.ForEach(s => s.Animator.SetBool("SoldierRun", true));
+        attackBattleSoldier.ForEach(s => s.Animator.CrossFade("SoldierRun", 0, 0, Random.Range(0f, 1f)));
+        attackBattleCommander.ForEach(c => c.Animator.SetBool("CommanderRun", true));
+        attackBattleCommander.ForEach(c => c.Animator.CrossFade("CommanderRun", 0, 0, Random.Range(0f, 1f)));
 
         StartCoroutine("State01");
     }
@@ -129,9 +134,18 @@ public class BattleWindowManager : MonoBehaviour
         {
             time += Time.deltaTime;
 
-
-
-            if (time >= ((BattleMoveBox.Node1.PlayerEnum == PlayerEnum.Player01) ? (0) : (1))) { break; }
+            if (BattleMoveBox.Node2.PlayerEnum == PlayerEnum.Player01)
+            {
+                Camera.main.transform.position = Vector3.Lerp(Camera.main.transform.position, (BattleMoveBox.Node2.transform.position + Vector3.up * 10), 0.1f * Time.deltaTime * 60);
+                if (time >= 1)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
 
             yield return null;
         }
@@ -143,6 +157,7 @@ public class BattleWindowManager : MonoBehaviour
     // State01から一定時間後に、戦闘画面を表示する
     IEnumerator State02()
     {
+        BattleCameraBackImage.SetActive(true);
         BattleCamera.SetActive(true);
         float time = 0;
         while (true)
@@ -228,9 +243,19 @@ public class BattleWindowManager : MonoBehaviour
             yield return null;
         }
 
+        attackBattleSoldier.ForEach(s => s.Animator.SetBool("SoldierRun", true));
+        attackBattleSoldier.ForEach(s => s.Animator.CrossFade("SoldierRun", 0, 0, Random.Range(0f, 1f)));
+        attackBattleCommander.ForEach(c => c.Animator.SetBool("CommanderRun", true));
+        attackBattleCommander.ForEach(c => c.Animator.CrossFade("CommanderRun", 0, 0, Random.Range(0f, 1f)));
+
         foreach (var s in attackBattleSoldier)
         {
             s.Animator.SetBool("SoldierRun", false);
+            yield return new WaitForSeconds(Random.Range(0.075f, 0.15f));
+        }
+        foreach (var c in attackBattleCommander)
+        {
+            c.Animator.SetBool("CommanderRun", false);
             yield return new WaitForSeconds(Random.Range(0.075f, 0.15f));
         }
 
@@ -393,7 +418,7 @@ public class BattleWindowManager : MonoBehaviour
         {
             power = Mathf.Lerp(power, BattleMoveBox.ButtleResult.DefenceTotalCombatPower, 0.2f * Time.deltaTime * 60);
             DefenceCombatPowerText.text = Mathf.RoundToInt(power).ToString();
-            DefenceCombatPowerText.color = Color.Lerp(DefenceCombatPowerText.color, new Color(255, 255, 100, 255) / 255f,0.2f*Time.deltaTime*60);
+            DefenceCombatPowerText.color = Color.Lerp(DefenceCombatPowerText.color, new Color(255, 255, 100, 255) / 255f, 0.2f * Time.deltaTime * 60);
 
             if (Mathf.RoundToInt(power) == BattleMoveBox.ButtleResult.DefenceTotalCombatPower)
             {
@@ -409,7 +434,7 @@ public class BattleWindowManager : MonoBehaviour
         yield break;
     }
 
-    // 勝ったほうのキャラ群が、相手に突っ込んで相手側が消滅する
+    // 勝ったほうのキャラ群が、攻撃アニメーションを再生して負けたほうは爆発して消える
     IEnumerator State07()
     {
         bool attackWin = BattleMoveBox.ButtleResult.AttackTotalCombatPower >= BattleMoveBox.ButtleResult.DefenceTotalCombatPower;
@@ -440,7 +465,7 @@ public class BattleWindowManager : MonoBehaviour
 
 
             yield return null;
-            if (time1 >= 1f) { break; }
+            if (time1 >= 0.5f) { break; }
         }
 
 
@@ -517,6 +542,7 @@ public class BattleWindowManager : MonoBehaviour
     IEnumerator State08()
     {
         BattleCamera.SetActive(false);
+        BattleCameraBackImage.SetActive(false);
         AttackBackImage.gameObject.SetActive(false);
         DefenceBackImage.gameObject.SetActive(false);
         AttackBackImage.color = Color.clear;

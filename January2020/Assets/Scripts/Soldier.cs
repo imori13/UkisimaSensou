@@ -14,7 +14,7 @@ public class Soldier : MonoBehaviour
     [SerializeField] Material[] MaterialArray;
     [SerializeField] SkinnedMeshRenderer SkinnedMeshRenderer;
 
-    void Start()
+    void Awake()
     {
         Animator = GetComponent<Animator>();
     }

@@ -44,3 +44,6 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: 02
+    uniqueID: 357790401
+    locked: 0

@@ -13,7 +13,7 @@ public class Commander : MonoBehaviour
 
     public Animator Animator { get; private set; }
 
-    void Start()
+    void Awake()
     {
         Animator = GetComponent<Animator>();
     }

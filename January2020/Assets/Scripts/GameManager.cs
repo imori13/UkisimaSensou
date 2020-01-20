@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject StartMenu;
     [SerializeField] Text TimerText;
     [SerializeField] Text FinishText;
+    [SerializeField] BattleResultUI BattleResultUIPrefab;
 
     float GamePlayTime;
 
@@ -36,7 +37,7 @@ public class GameManager : MonoBehaviour
         // 選択しているノードをnull
         SelectNode = null;
         TimerText.gameObject.SetActive(false);
-        GamePlayTime = 1000;
+        GamePlayTime = 6000;
         BattleWindowManager = GetComponent<BattleWindowManager>();
     }
 
@@ -256,6 +257,8 @@ public class GameManager : MonoBehaviour
         movebox.GameManager = this;
         // BattleWindowManagerの参照を与える
         movebox.BattleWindowManager = BattleWindowManager;
+        // BattleResultUIのPrefabの参照を与える
+        movebox.BattleResultUIPrefab = BattleResultUIPrefab;
 
         return movebox;
     }
@@ -319,7 +322,7 @@ public class GameManager : MonoBehaviour
             {
                 thinkMoveTime[i] = 0;
                 //thinkMoveLimit[i] = Random.Range(1f, 5f);
-                thinkMoveLimit[i] = Random.Range(0.1f,0.25f);
+                thinkMoveLimit[i] = Random.Range(0.1f, 0.25f);
 
                 // 前線を追加
                 List<Node> frontNode = new List<Node>();

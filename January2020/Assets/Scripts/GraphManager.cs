@@ -52,8 +52,8 @@ public class GraphManager : MonoBehaviour
             {
                 int count = MapManager.MapNode.Where(n => n.PlayerEnum == Graphs[i].PlayerEnum).Count();
 
-                float MAXWIDTH = 200;
-                float MINWIDTH = Mathf.Max(0, MinCount - 2);
+                float MAXWIDTH = 400;
+                float MINWIDTH = 0;
 
                 float rate = count / (float)MaxCount;
 

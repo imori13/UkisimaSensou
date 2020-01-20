@@ -10,6 +10,7 @@ public class MoveBox : MonoBehaviour
     public MapManager Map { get; set; }
     public GameManager GameManager { get; set; }
     public BattleWindowManager BattleWindowManager { get; set; }
+    public BattleResultUI BattleResultUIPrefab { get; set; }
     public PlayerEnum PlayerEnum { get; set; }
     public Node Node1 { get; set; }
     public Node Node2 { get; set; }
@@ -24,6 +25,8 @@ public class MoveBox : MonoBehaviour
     {
         Soldier.ForEach(s => s.Animator.SetBool("SoldierRun", true));
         Soldier.ForEach(s => s.Animator.CrossFade("SoldierRun", 0, 0, Random.Range(0f, 1f)));
+        Commander.ForEach(c => c.Animator.SetBool("CommanderRun", true));
+        Commander.ForEach(c => c.Animator.CrossFade("CommanderRun", 0, 0, Random.Range(0f, 1f)));
     }
 
     void Update()
@@ -52,6 +55,8 @@ public class MoveBox : MonoBehaviour
 
         Soldier.ForEach(s => s.Animator.SetBool("SoldierRun", false));
         Soldier.ForEach(s => s.Animator.CrossFade("SoldierWait", 0, 0, Random.Range(0f, 1f)));
+        Commander.ForEach(c => c.Animator.SetBool("CommanderRun", false));
+        Commander.ForEach(c => c.Animator.CrossFade("CommanderWait", 0, 0, Random.Range(0f, 1f)));
 
         // 移動先が同じプレイヤーなら移動
         if (Node2.PlayerEnum == PlayerEnum)
@@ -93,12 +98,12 @@ public class MoveBox : MonoBehaviour
         ButtleResult = new BattleResult();
         ButtleResult.Battle(this);
 
-        // 相手が無所属でないかつ、もしプレイヤーと関係のあるバトルだった場合
-        if (Node2.PlayerEnum != PlayerEnum.None && (Node1.PlayerEnum == PlayerEnum.Player01 || Node2.PlayerEnum == PlayerEnum.Player01))
-        {
-            BattleWindowManager.Initialize(this);
-            return;
-        }
+        //// 相手が無所属でないかつ、もしプレイヤーと関係のあるバトルだった場合
+        //if (Node2.PlayerEnum != PlayerEnum.None && (Node1.PlayerEnum == PlayerEnum.Player01 || Node2.PlayerEnum == PlayerEnum.Player01))
+        //{
+        //    BattleWindowManager.Initialize(this);
+        //    return;
+        //}
 
         if (ButtleResult.AttackTotalCombatPower >= ButtleResult.DefenceTotalCombatPower)
             AttackWin();
@@ -117,6 +122,9 @@ public class MoveBox : MonoBehaviour
     // 勝利時
     void AttackWin()
     {
+        // マップ上に戦闘結果UIを表示
+        CreateBattleResultUI(Node2.transform.position, Node1.PlayerEnum, Node2.PlayerEnum);
+
         // もし相手のノードが本拠地なら
         if (Node2.IsBaseNode)
         {
@@ -188,5 +196,13 @@ public class MoveBox : MonoBehaviour
 
         // MoveBoxを削除
         Destroy(gameObject);
+    }
+
+    void CreateBattleResultUI(Vector3 position, PlayerEnum winNode, PlayerEnum loseNode)
+    {
+        if (winNode == PlayerEnum.None || loseNode == PlayerEnum.None) return;
+
+        BattleResultUI instance = Instantiate(BattleResultUIPrefab, position + Vector3.up * 1, Quaternion.LookRotation(Vector3.up, Vector3.up));
+        instance.Initialize(winNode, loseNode);
     }
 }
