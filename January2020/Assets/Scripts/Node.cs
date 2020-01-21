@@ -82,6 +82,9 @@ public class Node : MonoBehaviour
         }
     }
 
+    // ノード固有のキャラを円形に配置をするときのオフセット
+    float offsetDeg;
+
     public void Initialize()
     {
         if (PlayerEnum == PlayerEnum.None) return;
@@ -94,30 +97,11 @@ public class Node : MonoBehaviour
             + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
         commander.UpdateNode(this);
         Commander.Add(commander);
+        ResetPosCharacter();
+        Soldier.ForEach(s => s.transform.position = s.DestPosition);
+        Commander.ForEach(c => c.transform.position = c.DestPosition);
 
-        //if(PlayerEnum == PlayerEnum.Player01)
-        //{
-        //    for(int i = 0; i < 50; i++)
-        //    {
-        //        Commander commander1 = Instantiate(CommanderPrefab).GetComponent<Commander>();
-        //        float scale2 = transform.localScale.x / 2f;
-        //        commander1.gameObject.transform.position
-        //            = transform.position
-        //            + (Vector3.up * 0.5f)
-        //            + (new Vector3(Random.Range(-scale2, scale2), 0, Random.Range(-scale2, scale2)));
-        //        commander1.UpdateNode(this);
-        //        Commander.Add(commander1);
-
-        //        Soldier soldier = Instantiate(SoldierPrefab).GetComponent<Soldier>();
-        //        float scale1 = transform.localScale.x / 2f;
-        //        soldier.gameObject.transform.position
-        //            = transform.position
-        //            + (Vector3.up * 0.5f)
-        //            + (new Vector3(Random.Range(-scale1, scale1), 0, Random.Range(-scale1, scale1)));
-        //        soldier.UpdateNode(this);
-        //        Soldier.Add(soldier);
-        //    }
-        //}
+        offsetDeg = Random.Range(0f, 360f);
     }
 
     void Start()
@@ -127,32 +111,6 @@ public class Node : MonoBehaviour
         MeshRenderer = GetComponent<MeshRenderer>();
         MeshFilter = GetComponent<MeshFilter>();
         MeshRenderer.material.color = Normal_Color;
-
-        //int[] array1 = new int[] { 0, 20, 50, 40, 30, 20 };
-        //for (int i = 0; i < MyMath.GetRandomIndex(array1); i++)
-        //{
-        //    Commander commander = Instantiate(CommanderPrefab).GetComponent<Commander>();
-        //    float scale = transform.localScale.x / 2f;
-        //    commander.gameObject.transform.position
-        //        = transform.position
-        //        + (Vector3.up * 0.5f)
-        //        + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
-        //    commander.UpdateNode(this);
-        //    Commander.Add(commander);
-        //}
-
-        //int[] array2 = new int[] { 010, 20, 30, 40, 50, 40, 30, 20, 10 };
-        //for (int i = 0; i < MyMath.GetRandomIndex(array2); i++)
-        //{
-        //    Soldier soldier = Instantiate(SoldierPrefab).GetComponent<Soldier>();
-        //    float scale = transform.localScale.x / 2f;
-        //    soldier.gameObject.transform.position
-        //        = transform.position
-        //        + (Vector3.up * 0.5f)
-        //        + (new Vector3(Random.Range(-scale, scale), 0, Random.Range(-scale, scale)));
-        //    soldier.UpdateNode(this);
-        //    Soldier.Add(soldier);
-        //}
     }
 
     void Update()
@@ -189,9 +147,12 @@ public class Node : MonoBehaviour
 
     public void UpdateNodeColor()
     {
+        // ないならとる
         if (MeshRenderer == null) { MeshRenderer = GetComponent<MeshRenderer>(); }
         if (MeshFilter == null) { MeshFilter = GetComponent<MeshFilter>(); }
+
         Material material = MeshRenderer.material;
+        // モデルマテリアルなどなどプレイヤーごとの割り当て
         switch (PlayerEnum)
         {
             case PlayerEnum.Player01:
@@ -269,6 +230,7 @@ public class Node : MonoBehaviour
                 break;
         }
 
+        // 拠点なら
         if (IsBaseNode)
         {
             Vector3 vec3 = (ConnectNode[0].transform.position - transform.position);
@@ -276,18 +238,36 @@ public class Node : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(vec3, Vector3.up);
         }
 
-        if (!IsConnectMainBase)
-            Normal_Color *= 0.8f;
-
         Destroy(material);
 
         if (GameManager != null && GameManager.SelectNode != null)
         {
-            if (GameManager.SelectNode == this || GameManager.SelectNode.ConnectNode.Contains(this)) { Normal_Color *= 1.5f; }
+            if (GameManager.SelectNode == this) { Normal_Color *= 2.0f; }
         }
         if (!IsBaseNode && Tower != null) { Destroy(Tower.gameObject); }
 
         MeshRenderer.material.color = Normal_Color;
+    }
+
+    public void ResetPosCharacter()
+    {
+        // 兵士と指揮官の再配置
+
+        for (int i = 0; i < Soldier.Count; i++)
+        {
+            float count = Soldier.Count;
+            float r = i / count;
+            float rad = ((360 * r) + offsetDeg) * Mathf.Deg2Rad;
+            Soldier[i].DestPosition = transform.position + MyMath.RadToVec3(rad) * Scale * 0.5f * 0.6f;
+        }
+
+        for (int i = 0; i < Commander.Count; i++)
+        {
+            float count = Commander.Count;
+            float r = i / count;
+            float rad = ((360 * r) - 180 + offsetDeg) * Mathf.Deg2Rad;
+            Commander[i].DestPosition = transform.position + MyMath.RadToVec3(rad) * Scale * 0.5f * 0.3f;
+        }
     }
 
     public void Attack(Node node)
@@ -319,6 +299,8 @@ public class Node : MonoBehaviour
         // 親を更新
         Soldier.ForEach(c => c.UpdateNode(this));
         node.Soldier.ForEach(c => c.UpdateNode(node));
+        ResetPosCharacter();
+        node.ResetPosCharacter();
 
         // 現在選択しているノードの指揮官をクリア
         Soldier.Clear();
@@ -368,6 +350,8 @@ public class Node : MonoBehaviour
         node.Commander.ForEach(c => c.UpdateNode(node));
         Soldier.ForEach(c => c.UpdateNode(this));
         node.Soldier.ForEach(c => c.UpdateNode(node));
+
+        node.ResetPosCharacter();
     }
 
     // 負けたら指揮官が１人に、兵士が消える

@@ -21,18 +21,22 @@ public class MoveBox : MonoBehaviour
 
     public BattleResult ButtleResult { get; private set; }
 
+    float movespeed = 0.1f;
+
     void Start()
     {
         Soldier.ForEach(s => s.Animator.SetBool("SoldierRun", true));
-        Soldier.ForEach(s => s.Animator.CrossFade("SoldierRun", 0, 0, Random.Range(0f, 1f)));
         Commander.ForEach(c => c.Animator.SetBool("CommanderRun", true));
-        Commander.ForEach(c => c.Animator.CrossFade("CommanderRun", 0, 0, Random.Range(0f, 1f)));
     }
 
     void Update()
     {
         // 線形補完を応用したイージング処理で移動させる
-        transform.position = Vector3.Lerp(transform.position, Node2.transform.position, 0.05f * MyTime.time);
+        Vector3 distance = (Node2.transform.position - transform.position).normalized;
+        transform.position += distance * movespeed * MyTime.time;
+
+        Soldier.ForEach(s => s.DestPosition = transform.position);
+        Commander.ForEach(c => c.DestPosition = transform.position);
 
         if (BattleWindowManager.BattleMoveBox != null) return;
         if (Vector3.SqrMagnitude(transform.position - Node2.transform.position) <= (0.5f * 0.5f))
@@ -53,11 +57,6 @@ public class MoveBox : MonoBehaviour
         if (Node2.HeadingMovebox.Contains(this))
             Node2.HeadingMovebox.Remove(this);
 
-        Soldier.ForEach(s => s.Animator.SetBool("SoldierRun", false));
-        Soldier.ForEach(s => s.Animator.CrossFade("SoldierWait", 0, 0, Random.Range(0f, 1f)));
-        Commander.ForEach(c => c.Animator.SetBool("CommanderRun", false));
-        Commander.ForEach(c => c.Animator.CrossFade("CommanderWait", 0, 0, Random.Range(0f, 1f)));
-
         // 移動先が同じプレイヤーなら移動
         if (Node2.PlayerEnum == PlayerEnum)
             Move();
@@ -69,6 +68,14 @@ public class MoveBox : MonoBehaviour
     // 移動
     void Move()
     {
+        List<Node> SearchNode = GameManager.SearchRoute(Node2, DestNode);
+        if (!(SearchNode != null && Node2 != DestNode && SearchNode[1] != null && Node2.MovePermission &&
+            SearchNode[1].MovePermission && SearchNode[0].Soldier.Count > 0 && SearchNode[1].Soldier.Count < 5))
+        {
+            Soldier.ForEach(s => s.Animator.SetBool("SoldierRun", false));
+            Commander.ForEach(c => c.Animator.SetBool("CommanderRun", false));
+        }
+
         // 指揮官がいた場合にも、移動させる
         Node2.Commander.AddRange(Commander);
         Commander.Clear();
@@ -79,14 +86,18 @@ public class MoveBox : MonoBehaviour
         // 親を更新
         Node2.Commander.ForEach(c => c.UpdateNode(Node2));
         Node2.Soldier.ForEach(c => c.UpdateNode(Node2));
+        Node2.ResetPosCharacter();
 
         // お互いのノードの移動許可フラグを再びONにする
         Node2.MovePermission = true;
 
+
         // GameManagerのMove関数を呼び出す
-        List<Node> SearchNode = GameManager.SearchRoute(Node2, DestNode);
-        if (DestNode != null && SearchNode != null)
+        if (SearchNode != null && Node2 != DestNode && SearchNode[1] != null && Node2.MovePermission &&
+            SearchNode[1].MovePermission && SearchNode[0].Soldier.Count > 0 && SearchNode[1].Soldier.Count < 5)
+        {
             GameManager.Move(SearchNode[0], SearchNode[1], DestNode);
+        }
 
         // MoveBoxを削除
         Destroy(gameObject);
@@ -98,12 +109,12 @@ public class MoveBox : MonoBehaviour
         ButtleResult = new BattleResult();
         ButtleResult.Battle(this);
 
-        //// 相手が無所属でないかつ、もしプレイヤーと関係のあるバトルだった場合
-        //if (Node2.PlayerEnum != PlayerEnum.None && (Node1.PlayerEnum == PlayerEnum.Player01 || Node2.PlayerEnum == PlayerEnum.Player01))
-        //{
-        //    BattleWindowManager.Initialize(this);
-        //    return;
-        //}
+        // 相手が無所属でないかつ、もしプレイヤーと関係のあるバトルだった場合
+        if (Node2.PlayerEnum != PlayerEnum.None && (Node1.PlayerEnum == PlayerEnum.Player01 || Node2.PlayerEnum == PlayerEnum.Player01))
+        {
+            BattleWindowManager.Initialize(this);
+            return;
+        }
 
         if (ButtleResult.AttackTotalCombatPower >= ButtleResult.DefenceTotalCombatPower)
             AttackWin();
@@ -124,6 +135,9 @@ public class MoveBox : MonoBehaviour
     {
         // マップ上に戦闘結果UIを表示
         CreateBattleResultUI(Node2.transform.position, Node1.PlayerEnum, Node2.PlayerEnum);
+
+        Soldier.ForEach(s => s.Animator.SetBool("SoldierRun", false));
+        Commander.ForEach(c => c.Animator.SetBool("CommanderRun", false));
 
         // もし相手のノードが本拠地なら
         if (Node2.IsBaseNode)
@@ -171,9 +185,8 @@ public class MoveBox : MonoBehaviour
         // 親を更新
         Node2.Commander.ForEach(c => c.UpdateNode(Node2));
         Node2.Soldier.ForEach(c => c.UpdateNode(Node2));
-
-        // ノードの色をすべて更新
-        Map.AllUpdateNodeColor();
+        Node2.ResetPosCharacter();
+        Node2.UpdateNodeColor();
 
         // お互いのノードの移動許可フラグを再びONにする
         Node2.MovePermission = true;
@@ -185,6 +198,9 @@ public class MoveBox : MonoBehaviour
     // 敗北時
     void AttackLose()
     {
+        Soldier.ForEach(s => s.Animator.SetBool("SoldierRun", false));
+        Commander.ForEach(c => c.Animator.SetBool("CommanderRun", false));
+
         // 全部消滅
         Commander.ForEach(c => Destroy(c.gameObject));
         Commander.Clear();

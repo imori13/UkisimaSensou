@@ -86,6 +86,11 @@ public static class MyMath
         return Mathf.Atan2(vec3.z, vec3.x);
     }
 
+    public static Vector3 RadToVec3(float radian)
+    {
+        return new Vector3(Mathf.Cos(radian), 0, Mathf.Sin(radian));
+    }
+
     public static Vector2 RadToVec2(float radian)
     {
         return new Vector2(Mathf.Cos(radian), Mathf.Sin(radian));

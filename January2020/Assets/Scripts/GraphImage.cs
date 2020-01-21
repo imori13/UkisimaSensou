@@ -21,9 +21,9 @@ public class GraphImage : MonoBehaviour
         // バーの色
         switch (PlayerEnum)
         {
-            case PlayerEnum.Player01: Image.color = new Color(125, 225, 125, 255) / 255f; break;
-            case PlayerEnum.Player02: Image.color = new Color(225, 125, 125, 255) / 255f; break;
-            case PlayerEnum.Player03: Image.color = new Color(125, 225, 225, 255) / 255f; break;
+            case PlayerEnum.Player01: Image.color = new Color(225, 125, 125, 255) / 255f; break;
+            case PlayerEnum.Player02: Image.color = new Color(125, 225, 225, 255) / 255f; break;
+            case PlayerEnum.Player03: Image.color = new Color(125, 225, 125, 255) / 255f; break;
             case PlayerEnum.Player04: Image.color = new Color(225, 225, 125, 255) / 255f; break;
         }
     }

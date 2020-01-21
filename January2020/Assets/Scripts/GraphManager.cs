@@ -36,8 +36,8 @@ public class GraphManager : MonoBehaviour
         if (GameManager.IsStart)
         {
             // プレイヤーの最大領土を調べる
-            int MaxCount = 0;
-            int MinCount = 0;
+            float MaxCount = 0;
+            float MinCount = 0;
             for (int i = 0; i < Graphs.Count; i++)
             {
                 int count = MapManager.MapNode.Where(n => n.PlayerEnum == Graphs[i].PlayerEnum).Count();
@@ -52,10 +52,11 @@ public class GraphManager : MonoBehaviour
             {
                 int count = MapManager.MapNode.Where(n => n.PlayerEnum == Graphs[i].PlayerEnum).Count();
 
-                float MAXWIDTH = 400;
+                float MAXWIDTH = 300;
                 float MINWIDTH = 0;
 
-                float rate = count / (float)MaxCount;
+                float hoge = (MinCount - MinCount * 0.25f);
+                float rate = (count - hoge) / (MaxCount - hoge);
 
                 float destWidth = Mathf.Lerp(MINWIDTH, MAXWIDTH, rate);
                 float destYPos = -40 * i;

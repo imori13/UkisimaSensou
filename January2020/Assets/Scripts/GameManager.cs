@@ -37,7 +37,7 @@ public class GameManager : MonoBehaviour
         // 選択しているノードをnull
         SelectNode = null;
         TimerText.gameObject.SetActive(false);
-        GamePlayTime = 6000;
+        GamePlayTime = 600;
         BattleWindowManager = GetComponent<BattleWindowManager>();
     }
 
@@ -179,11 +179,8 @@ public class GameManager : MonoBehaviour
                 {
                     // 新しく選択したノードの色を変える
                     SelectNode = hit.collider.gameObject.GetComponent<Node>();
-                    SelectNode.MeshRenderer.material.color += SelectNode.Normal_Color;
-                    foreach (var a in SelectNode.ConnectNode)
-                    {
-                        a.MeshRenderer.material.color += a.Normal_Color / 4f;
-                    }
+                    SelectNode.UpdateNodeColor();
+                    SelectNode.ConnectNode.ForEach(c => c.UpdateNodeColor());
                 }
             }
         }
@@ -215,11 +212,21 @@ public class GameManager : MonoBehaviour
                         {
                             if (SelectNode.PlayerEnum == rightClickNode.PlayerEnum)
                             {
+                                if (SelectNode.Soldier.Count <= 0)
+                                    WarningTextUI.UpdateWarningText("指揮官は移動できない");
+                                else if(!SelectNode.MovePermission)
+                                    WarningTextUI.UpdateWarningText("いまのノードに誰かが向かっているため動けない");
+                                else if(!rightClickNode.MovePermission)
+                                    WarningTextUI.UpdateWarningText("そのノードを誰かが使っていて動けない");
                                 Move(SelectNode, rightClickNode);
                             }
                             // 攻撃
                             else
                             {
+                                if (SelectNode.Soldier.Count <= 0)
+                                    WarningTextUI.UpdateWarningText("兵士がいないと攻撃できない");
+                                else if (SelectNode.Commander.Count <= 1)
+                                    WarningTextUI.UpdateWarningText("指揮官は２体以上いないと攻撃できない");
                                 Attack(SelectNode, rightClickNode);
                             }
                         }
@@ -270,17 +277,19 @@ public class GameManager : MonoBehaviour
         // ゲームが終了していたらリターン
         if (IsEnd) { return; }
 
-        for (int i = 0; i < MapManager.PlayerCount; i++)
+        for (int i = 1; i < MapManager.PlayerCount; i++)
         {
             thinkAttackTime[i] += MyTime.deltaTime;
 
             if (thinkAttackTime[i] >= thinkAttackLimit[i])
             {
                 thinkAttackTime[i] = 0;
-                //thinkAttackLimit[i] = Random.Range(1f, 7f);
-                thinkAttackLimit[i] = Random.Range(0.1f, 0.25f);
+                thinkAttackLimit[i] = Random.Range(1f, 7f);
+                //thinkAttackLimit[i] = Random.Range(0.1f, 0.25f);
 
-                foreach (var node in Map.MapNode.Where(n => (n.PlayerEnum == (PlayerEnum)i && n.Commander.Count > 1 && n.Soldier.Count > 0)))
+                var list = Map.MapNode.Where(n => (n.PlayerEnum == (PlayerEnum)i && n.Commander.Count > 1 && n.Soldier.Count > 0)).ToList();
+                list = list.OrderBy(a => System.Guid.NewGuid()).ToList();
+                foreach (var node in list)
                 {
                     foreach (var connect in node.ConnectNode)
                     {
@@ -314,15 +323,15 @@ public class GameManager : MonoBehaviour
         if (IsEnd) { return; }
 
 
-        for (int i = 0; i < MapManager.PlayerCount; i++)
+        for (int i = 1; i < MapManager.PlayerCount; i++)
         {
             thinkMoveTime[i] += MyTime.deltaTime;
 
             if (thinkMoveTime[i] >= thinkMoveLimit[i])
             {
                 thinkMoveTime[i] = 0;
-                //thinkMoveLimit[i] = Random.Range(1f, 5f);
-                thinkMoveLimit[i] = Random.Range(0.1f, 0.25f);
+                thinkMoveLimit[i] = Random.Range(1f, 5f);
+                //thinkMoveLimit[i] = Random.Range(0.1f, 0.25f);
 
                 // 前線を追加
                 List<Node> frontNode = new List<Node>();
@@ -337,7 +346,9 @@ public class GameManager : MonoBehaviour
                     }
                 }
 
-                foreach (var node in Map.MapNode.Where(n => (n.PlayerEnum == (PlayerEnum)i && n.Soldier.Count > 0)))
+                var list = Map.MapNode.Where(n => (n.PlayerEnum == (PlayerEnum)i && n.Soldier.Count > 0)).ToList();
+                list = list.OrderBy(a => System.Guid.NewGuid()).ToList();
+                foreach (var node in list)
                 {
                     // 違う領土ならスキップ
                     if (node.PlayerEnum != (PlayerEnum)i) continue;
@@ -473,7 +484,7 @@ public class GameManager : MonoBehaviour
 
         // 時間をカウントダウン
         GamePlayTime = Mathf.Max(0, (IsStart && !IsEnd) ? (GamePlayTime - MyTime.deltaTime) : (GamePlayTime));
-        TimerText.text = "Time > " + GamePlayTime.ToString("00.00");
+        TimerText.text = GamePlayTime.ToString("0");
 
         // ゲームの終了条件
         // 時間が0以下なら、またはプレイヤーの領土が0なら、またはすべて占領したら
@@ -498,7 +509,7 @@ public class GameManager : MonoBehaviour
             if (time >= 4)
             {
                 TimerText.color = Color.Lerp(TimerText.color, Color.clear, 0.1f * Time.deltaTime * 60);
-                FinishText.color = Color.Lerp(FinishText.color, Color.clear, 0.1f * Time.deltaTime * 60);
+                FinishText.color = Color.Lerp(FinishText.color, FinishText.color * new Color(1, 1, 1, 0), 0.1f * Time.deltaTime * 60);
                 Camera.main.transform.position = Vector3.Lerp(Camera.main.transform.position, new Vector3(0, 90, 0), 0.025f * Time.deltaTime * 60);
                 Camera.main.transform.rotation = Quaternion.Lerp(Camera.main.transform.rotation, Quaternion.LookRotation(-Vector3.up, Vector3.up), 0.025f * Time.deltaTime * 60);
             }

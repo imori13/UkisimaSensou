@@ -450,10 +450,10 @@ public class MapManager : MonoBehaviour
             count = Mathf.Clamp(count, countMin, countMax);
 
             // 指揮官生成
-            //float cGeneLimitMax = 3f;
-            //float cGeneLimitMin = 2.5f;
-            float cGeneLimitMax = 1f;
-            float cGeneLimitMin = 0.5f;
+            float cGeneLimitMax = 5f;
+            float cGeneLimitMin = 3f;
+            //float cGeneLimitMax = 1f;
+            //float cGeneLimitMin = 0.5f;
             // (count-5) / (50-5) => [ 5/50 => 0/45 ] [ 50/50 => 45/45 ]
             float cGeneRate = (count - countMin) / (countMax - countMin);
             cGeneLimit[i] = Mathf.Lerp(cGeneLimitMax, cGeneLimitMin, cGeneRate);
@@ -464,10 +464,10 @@ public class MapManager : MonoBehaviour
                 CreateCommander((PlayerEnum)i);
             }
 
-            //float sGeneLimitMax = 2.5f;
-            //float sGeneLimitMin = 0.75f;
-            float sGeneLimitMax = 1f;
-            float sGeneLimitMin = 0.5f;
+            float sGeneLimitMax = 2.5f;
+            float sGeneLimitMin = 0.75f;
+            //float sGeneLimitMax = 1f;
+            //float sGeneLimitMin = 0.5f;
             // (count-5) / (50-5) => [ 5/50 => 0/45 ] [ 50/50 => 45/45 ]
             float sGeneRate = (count - countMin) / (countMax - countMin);
             sGeneLimit[i] = Mathf.Lerp(sGeneLimitMax, sGeneLimitMin, sGeneRate);
@@ -494,11 +494,12 @@ public class MapManager : MonoBehaviour
         if (list1.Count > 0)
         {
             Commander commander = Instantiate(CommanderPrefab).GetComponent<Commander>();
-            Node node1 = list1[Random.Range(0, list1.Count)];
-            node1.Commander.Add(commander);
-            commander.UpdateNode(node1);
+            Node node = list1[Random.Range(0, list1.Count)];
+            node.Commander.Add(commander);
+            commander.UpdateNode(node);
+            node.ResetPosCharacter();
+            commander.transform.position = commander.DestPosition;
         }
-
     }
 
     void CreateSoldier(PlayerEnum playerEnum)
@@ -511,9 +512,11 @@ public class MapManager : MonoBehaviour
         {
             if (PlayerBaseNode[(int)playerEnum].SoldierCount < 5)
             {
-                Soldier soldier1 = Instantiate(SoldierPrefab).GetComponent<Soldier>();
-                PlayerBaseNode[(int)playerEnum].Soldier.Add(soldier1);
-                soldier1.UpdateNode(PlayerBaseNode[(int)playerEnum]);
+                Soldier soldier = Instantiate(SoldierPrefab).GetComponent<Soldier>();
+                PlayerBaseNode[(int)playerEnum].Soldier.Add(soldier);
+                soldier.UpdateNode(PlayerBaseNode[(int)playerEnum]);
+                PlayerBaseNode[(int)playerEnum].ResetPosCharacter();
+                soldier.transform.position = soldier.DestPosition;
             }
         }
     }

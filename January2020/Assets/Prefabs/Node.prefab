@@ -102,20 +102,20 @@ MonoBehaviour:
     type: 3}
   TowerMesh: {fileID: 7328274621346949332, guid: d8ea464ebd4e7e145bb9fee7e6bb5b85,
     type: 3}
-  Player01Material: {fileID: 2100000, guid: 947443d56d9367640b333b46249d7647, type: 2}
-  Player01BaseMaterial: {fileID: 2100000, guid: c677ff9d5d0dfee4ca3afbef8a499362,
+  Player01Material: {fileID: 2100000, guid: fc57ad1cc8ee84e4f84eb7069a718972, type: 2}
+  Player01BaseMaterial: {fileID: 2100000, guid: 5e5457e0648d9c84bbe46e5bb70b8d45,
     type: 2}
-  Player01TowerMaterial: {fileID: 2100000, guid: 505394641c5c15a4eb995bc0422afe7f,
+  Player01TowerMaterial: {fileID: 2100000, guid: 58e9d7f0b09debd4fa3a4e5742abb73c,
     type: 2}
-  Player02Material: {fileID: 2100000, guid: 4013f20885a5a7d40b485c89cfbd5d34, type: 2}
-  Player02BaseMaterial: {fileID: 2100000, guid: 4666c357b520e7948b54f3808ad296d8,
+  Player02Material: {fileID: 2100000, guid: 947443d56d9367640b333b46249d7647, type: 2}
+  Player02BaseMaterial: {fileID: 2100000, guid: c677ff9d5d0dfee4ca3afbef8a499362,
     type: 2}
-  Player02TowerMaterial: {fileID: 2100000, guid: 03c55f93feac3e54eb83d0ab5e34ffc3,
+  Player02TowerMaterial: {fileID: 2100000, guid: 505394641c5c15a4eb995bc0422afe7f,
     type: 2}
-  Player03Material: {fileID: 2100000, guid: fc57ad1cc8ee84e4f84eb7069a718972, type: 2}
-  Player03BaseMaterial: {fileID: 2100000, guid: 5e5457e0648d9c84bbe46e5bb70b8d45,
+  Player03Material: {fileID: 2100000, guid: 4013f20885a5a7d40b485c89cfbd5d34, type: 2}
+  Player03BaseMaterial: {fileID: 2100000, guid: 4666c357b520e7948b54f3808ad296d8,
     type: 2}
-  Player03TowerMaterial: {fileID: 2100000, guid: 58e9d7f0b09debd4fa3a4e5742abb73c,
+  Player03TowerMaterial: {fileID: 2100000, guid: 03c55f93feac3e54eb83d0ab5e34ffc3,
     type: 2}
   Player04Material: {fileID: 2100000, guid: f14ca00347694364cbd934de0a04bffa, type: 2}
   Player04BaseMaterial: {fileID: 2100000, guid: ad7b055139bd4aa4683090deacdf747d,
