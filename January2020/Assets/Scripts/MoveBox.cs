@@ -216,8 +216,6 @@ public class MoveBox : MonoBehaviour
 
     void CreateBattleResultUI(Node node1, Node node2)
     {
-        if (node1.PlayerEnum == PlayerEnum.None || node2.PlayerEnum == PlayerEnum.None) return;
-
         BattleResultUI instance = Instantiate(BattleResultUIPrefab, node2.transform.position + Vector3.up * 1, Quaternion.LookRotation(Vector3.up, Vector3.up));
         instance.Initialize(node1.PlayerEnum);
     }

@@ -46,7 +46,7 @@ public class GameManager : MonoBehaviour
         // 選択しているノードをnull
         SelectNode = null;
         TimerText.gameObject.SetActive(false);
-        GamePlayTime = 5;
+        GamePlayTime = 600;
         BattleWindowManager = GetComponent<BattleWindowManager>();
     }
 

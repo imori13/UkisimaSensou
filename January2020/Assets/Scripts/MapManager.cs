@@ -477,7 +477,7 @@ public class MapManager : MonoBehaviour
                     else
                         GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.05f * Time.deltaTime * 60);
 
-                    GameStartText.text = "敵から陣地を奪って、敵よりも多くの陣地を獲得しよう";
+                    GameStartText.text = "敵とバトルして、敵よりも多くの陣地を獲得しよう";
                 }
                 else
                 {
@@ -486,7 +486,7 @@ public class MapManager : MonoBehaviour
                     else
                         GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.05f * Time.deltaTime * 60);
 
-                    GameStartText.text = "ゲーム終了時に一番多くの拠点を持つプレイヤーが勝利する";
+                    GameStartText.text = "ゲーム終了時に一番多くの拠点を持つプレイヤーが勝利します";
                 }
 
                 pos = Vector3.zero;
@@ -512,7 +512,7 @@ public class MapManager : MonoBehaviour
                     else
                         GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.025f * Time.deltaTime * 60);
 
-                    GameStartText.text = "浮島が舞台の陣取りゲーム";
+                    GameStartText.text = "陣取りゲーム";
                 }
                 else
                 {
@@ -521,7 +521,7 @@ public class MapManager : MonoBehaviour
                     else
                         GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.025f * Time.deltaTime * 60);
 
-                    GameStartText.text = "拠点から生成される指揮官と兵士を移動させて陣地を広げられる";
+                    GameStartText.text = "拠点から生成される兵士を移動させて陣地を広げられる";
                 }
 
                 pos = PlayerBaseNode[(int)PlayerEnum.Player01].transform.position;
@@ -532,7 +532,7 @@ public class MapManager : MonoBehaviour
                     0.005f * Time.deltaTime * 60);
                 CameraController.transform.rotation = Quaternion.Lerp(CameraController.transform.rotation, Quaternion.LookRotation(pos - CameraController.transform.position, Vector3.up), 0.025f * Time.deltaTime * 60);
             }
-            //else
+            else
             {
                 CameraController.IsControll = true;
                 CameraController.DestPosition = PlayerBaseNode[(int)PlayerEnum.Player01].transform.position;
