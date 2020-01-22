@@ -5,6 +5,19 @@ using UnityEngine.SceneManagement;
 
 public class TitleManager : MonoBehaviour
 {
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+        {
+            GameStart();
+        }
+
+        if (Input.GetKey(KeyCode.Escape))
+        {
+            Quit();
+        }
+    }
+
     public void GameStart()
     {
         SceneManager.LoadScene("GameScene");

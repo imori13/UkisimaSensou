@@ -743,7 +743,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 0}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1994,7 +1994,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u6307\u63EE\u5B98\u304C\uFF12\u4F53\u4EE5\u4E0A\u3067\u306A\u3044\u3068\u79FB\u52D5\u3067\u304D\u306A\u3044"
+  m_Text: 
 --- !u!222 &1199413681
 CanvasRenderer:
   m_ObjectHideFlags: 0
