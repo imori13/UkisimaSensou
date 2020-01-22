@@ -130,25 +130,24 @@ public class BattleWindowManager : MonoBehaviour
     {
         MyTime.IsTimeStop = true;
         float time = 0;
+
+        CameraController CameraController = Camera.main.GetComponent<CameraController>();
         while (true)
         {
             time += Time.deltaTime;
 
-            if (BattleMoveBox.Node2.PlayerEnum == PlayerEnum.Player01)
-            {
-                Camera.main.transform.position = Vector3.Lerp(Camera.main.transform.position, (BattleMoveBox.Node2.transform.position + Vector3.up * 10), 0.1f * Time.deltaTime * 60);
-                if (time >= 1)
-                {
-                    break;
-                }
-            }
-            else
+            CameraController.DestPosition = BattleMoveBox.Node2.transform.position;
+
+            if (time >= 1)
             {
                 break;
             }
 
             yield return null;
         }
+
+        BattleCameraBackImage.SetActive(true);
+        BattleCamera.SetActive(true);
 
         StartCoroutine("State02");
         yield break;
@@ -157,8 +156,6 @@ public class BattleWindowManager : MonoBehaviour
     // State01から一定時間後に、戦闘画面を表示する
     IEnumerator State02()
     {
-        BattleCameraBackImage.SetActive(true);
-        BattleCamera.SetActive(true);
         float time = 0;
         while (true)
         {

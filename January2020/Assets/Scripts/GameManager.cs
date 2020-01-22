@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // クリック操作をする操作する側のクラス
@@ -9,6 +10,7 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] GameObject MoveBoxes;
     [SerializeField] MapManager Map;
+    [SerializeField] CameraController CameraController;
 
     [SerializeField] GameObject StartMenu;
     [SerializeField] Text TimerText;
@@ -46,6 +48,11 @@ public class GameManager : MonoBehaviour
         LeftClick();
         RightClick();
         Quit();
+
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            SceneManager.LoadScene("TitleScene");
+        }
     }
 
     void FixedUpdate()
@@ -178,6 +185,11 @@ public class GameManager : MonoBehaviour
                 if (hit.collider.tag == "Node")
                 {
                     // 新しく選択したノードの色を変える
+                    if (hit.collider.gameObject.GetComponent<Node>().PlayerEnum != PlayerEnum.Player01)
+                    {
+                        WarningTextUI.UpdateWarningText("プレイヤーの領土以外は動かせない");
+                        return;
+                    }
                     SelectNode = hit.collider.gameObject.GetComponent<Node>();
                     SelectNode.UpdateNodeColor();
                     SelectNode.ConnectNode.ForEach(c => c.UpdateNodeColor());
@@ -210,30 +222,46 @@ public class GameManager : MonoBehaviour
                         // 右クリックで選択したノードが、現在選択しているノードの隣のノードなら
                         if (SelectNode.ConnectNode.Contains(rightClickNode))
                         {
-                            if (SelectNode.PlayerEnum == rightClickNode.PlayerEnum)
-                            {
-                                if (SelectNode.Soldier.Count <= 0)
-                                    WarningTextUI.UpdateWarningText("指揮官は移動できない");
-                                else if(!SelectNode.MovePermission)
-                                    WarningTextUI.UpdateWarningText("いまのノードに誰かが向かっているため動けない");
-                                else if(!rightClickNode.MovePermission)
-                                    WarningTextUI.UpdateWarningText("そのノードを誰かが使っていて動けない");
-                                Move(SelectNode, rightClickNode);
-                            }
-                            // 攻撃
+                            if (!SelectNode.MovePermission)
+                                WarningTextUI.UpdateWarningText("選択したノードは現在移動できない");
+                            else if (!rightClickNode.MovePermission)
+                                WarningTextUI.UpdateWarningText("移動選択したノードには現在移動できない");
                             else
                             {
-                                if (SelectNode.Soldier.Count <= 0)
-                                    WarningTextUI.UpdateWarningText("兵士がいないと攻撃できない");
-                                else if (SelectNode.Commander.Count <= 1)
-                                    WarningTextUI.UpdateWarningText("指揮官は２体以上いないと攻撃できない");
-                                Attack(SelectNode, rightClickNode);
+                                if (SelectNode.PlayerEnum == rightClickNode.PlayerEnum)
+                                {
+                                    if (SelectNode.Soldier.Count <= 0)
+                                        WarningTextUI.UpdateWarningText("指揮官は移動できない");
+                                    else if (rightClickNode.Soldier.Count >= 5)
+                                        WarningTextUI.UpdateWarningText("移動先のノードの兵士が満杯で移動できない");
+                                    else
+                                    {
+                                        Move(SelectNode, rightClickNode);
+                                        WarningTextUI.UpdateWarningText("");
+                                    }
+
+                                }
+                                // 攻撃
+                                else
+                                {
+                                    if (SelectNode.Commander.Count <= 1)
+                                        WarningTextUI.UpdateWarningText("指揮官は２体以上いないと攻撃できない");
+                                    else if (SelectNode.Soldier.Count <= 0)
+                                        WarningTextUI.UpdateWarningText("兵士がいないと攻撃できない");
+                                    else
+                                    {
+                                        Attack(SelectNode, rightClickNode);
+                                        WarningTextUI.UpdateWarningText("");
+                                    }
+                                }
                             }
                         }
                         else
                         {
                             List<Node> SearchNode = SearchRoute(SelectNode, rightClickNode);
-                            if (SearchNode != null)
+                            if (SearchNode == null)
+                                WarningTextUI.UpdateWarningText("移動できる経路が見つからない");
+                            else
                                 Move(SearchNode[0], SearchNode[1], rightClickNode);
                         }
                     }
@@ -304,7 +332,7 @@ public class GameManager : MonoBehaviour
 
 
                         if (estimatedCombatPower01 >= estimatedCombatPower02 || // 戦闘力が有利かどうか
-                            (node.Commander.Count + node.Soldier.Count) == (connect.Commander.Count + connect.Soldier.Count))   // お互い指揮官兵士55なら硬直するので、攻撃する
+                            (node.Commander.Count + node.Soldier.Count + connect.Commander.Count + connect.Soldier.Count) >= 20)   // お互い指揮官兵士55なら硬直するので、攻撃する
                         {
                             Attack(node, connect);
                             return;
@@ -392,11 +420,11 @@ public class GameManager : MonoBehaviour
                 if (connectNode.PlayerEnum != minCostNode.PlayerEnum) continue;
                 // 接続先がMINCOSTNODEの親ならスキップ
                 if (connectNode == minCostNode.PrevNode) continue;
+                // 兵士が5以上ならスキップ
+                if (connectNode.Soldier.Count >= 5) continue;
 
                 // コストを計算して代入
                 float cost = minCostNode.Cost + Vector3.Distance(connectNode.transform.position, minCostNode.transform.position);
-                // もし選んだノードが兵士5以上いたら、コストを加算する
-                cost += (connectNode.Soldier.Count >= 5) ? (1000) : (0);
 
                 // コストを更新
                 if (connectNode.Cost == float.MaxValue || cost < connectNode.Cost)

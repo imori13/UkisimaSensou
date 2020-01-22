@@ -41,9 +41,19 @@ public class WarningTextUI : MonoBehaviour
 
     public static void UpdateWarningText(string text)
     {
-        view = true;
-        time = 0;
-        WarningText.text = text;
-        BackImage.color = BackImage.color + new Color(0, 0, 0, 1);
+        if (text == "")
+        {
+            time = 0;
+            view = false;
+            WarningText.text = "";
+            BackImage.color = BackImage.color * new Color(1, 1, 1, 0);
+        }
+        else
+        {
+            view = true;
+            time = 0;
+            WarningText.text = text;
+            BackImage.color = BackImage.color + new Color(0, 0, 0, 1);
+        }
     }
 }

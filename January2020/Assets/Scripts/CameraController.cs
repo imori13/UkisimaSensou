@@ -3,11 +3,13 @@
 public class CameraController : MonoBehaviour
 {
     [SerializeField] GameManager GameManager;
-    Vector3 velocity;
     Vector3 destVelocity;
+    public Vector3 DestPosition { get; set; }
+    Vector3 offsetDirection = new Vector3(0, 25, -15).normalized;
+    float distance = 0;
 
-    static readonly Vector3 clampMinPos = new Vector3(-100, 3, -100);
-    static readonly Vector3 clampMaxPos = new Vector3(100, 90, 100);
+    static readonly Vector3 clampMinPos = new Vector3(-100, 10, -100);
+    static readonly Vector3 clampMaxPos = new Vector3(100, 35, 100);
 
     void Start()
     {
@@ -17,7 +19,7 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         float moveSpeed = 1.25f;
-        float updownSpeed = 0.75f;
+        float updownSpeed = 15f;
 
         destVelocity = Vector3.zero;
 
@@ -30,17 +32,19 @@ public class CameraController : MonoBehaviour
         // 移動量を正規化
         destVelocity.Normalize();
         destVelocity *= moveSpeed * Time.deltaTime * 60;
-
-        // 目標移動量を現在の移動量に線形補完を利用してイージング処理を行う
-        velocity = Vector3.Lerp(velocity, destVelocity, 0.1f);
+        DestPosition += destVelocity;
 
         // 上下移動
-        if (Input.GetAxis("Mouse ScrollWheel") > 0) { velocity += Vector3.down * updownSpeed * Time.deltaTime * 60; }
-        if (Input.GetAxis("Mouse ScrollWheel") < 0) { velocity += Vector3.up * updownSpeed * Time.deltaTime * 60; }
+        if (Input.GetAxis("Mouse ScrollWheel") > 0) { distance -= updownSpeed * Time.deltaTime * 60; }
+        if (Input.GetAxis("Mouse ScrollWheel") < 0) { distance += updownSpeed * Time.deltaTime * 60; }
+        distance = Mathf.Clamp(distance, clampMinPos.y, clampMaxPos.y);
 
         // 移動量を座標に足す
         if (!GameManager.IsEnd)
-            transform.position += velocity;
+            transform.position = new Vector3(
+                Mathf.Lerp(transform.position.x, DestPosition.x + (offsetDirection.x * distance), 0.05f * Time.deltaTime * 60),
+                Mathf.Lerp(transform.position.y, DestPosition.y + (offsetDirection.y * distance), 0.1f * Time.deltaTime * 60),
+                Mathf.Lerp(transform.position.z, DestPosition.z + (offsetDirection.z * distance), 0.05f * Time.deltaTime * 60));
 
         // 座標を指定の範囲に制限する
         transform.position = new Vector3(

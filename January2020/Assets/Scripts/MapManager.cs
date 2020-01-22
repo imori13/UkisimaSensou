@@ -132,7 +132,7 @@ public class MapManager : MonoBehaviour
             Node instance = Instantiate(Node);
             //instance.transform.position = (MapNode.Count <= 0) ? (Vector3.zero) : (MyMath.RandomGenerateSize(GenerateSize));
             instance.transform.position = (MapNode.Count <= PlayerCount) ? (Vector3.zero) : (MyMath.CircleRandom(GenerateSize));
-            int[] array = new int[] { 0, 0, 0, 0, 0, 10, 20, 50, 20, 10, 10, 0, 0, 0, 0, 2, 2 };
+            int[] array = new int[] { 0, 0, 0, 0, 0, 0, 0, 10, 20, 50, 10, 10 };
             float scale = MyMath.GetRandomIndex(array) + Random.Range(0f, 1f);
             instance.transform.localScale = (new Vector3(1, 1, 1) * scale * 0.3f);
             instance.transform.Rotate(0, Random.Range(0f, 360f), 0);

@@ -1420,7 +1420,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 1000
-  field of view: 80
+  field of view: 65
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -3031,6 +3031,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MoveBoxes: {fileID: 107361961}
   Map: {fileID: 1712769811}
+  CameraController: {fileID: 963194229}
   StartMenu: {fileID: 1885501218}
   TimerText: {fileID: 1878428191}
   FinishText: {fileID: 608044209}
