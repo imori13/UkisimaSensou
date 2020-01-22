@@ -12,17 +12,24 @@ public class GameManager : MonoBehaviour
     [SerializeField] MapManager Map;
     [SerializeField] CameraController CameraController;
 
-    [SerializeField] GameObject StartMenu;
     [SerializeField] Text TimerText;
     [SerializeField] Text FinishText;
     [SerializeField] BattleResultUI BattleResultUIPrefab;
+    [SerializeField] GameObject MinimapCamera;
+    [SerializeField] GameObject GraphManager;
+    [SerializeField] GameObject OperationExplanation;
+    [SerializeField] Image Top;
+    [SerializeField] Image Bottom;
+    [SerializeField] Image Result;
+    [SerializeField] Text ResultText;
+    [SerializeField] Image TouchToStart;
 
     float GamePlayTime;
 
     // 現在選択しているノード
     public Node SelectNode { get; set; }
     // ゲームが開始状態か否か
-    public bool IsStart { get; private set; } = false;
+    public bool IsStart { get; set; } = false;
     public bool IsEnd { get; private set; } = false;
     // バトル画面管理
     public BattleWindowManager BattleWindowManager { get; private set; }
@@ -39,7 +46,7 @@ public class GameManager : MonoBehaviour
         // 選択しているノードをnull
         SelectNode = null;
         TimerText.gameObject.SetActive(false);
-        GamePlayTime = 600;
+        GamePlayTime = 5;
         BattleWindowManager = GetComponent<BattleWindowManager>();
     }
 
@@ -411,7 +418,6 @@ public class GameManager : MonoBehaviour
         currentNode.Done = true;
         Node minCostNode = currentNode;
 
-        int count = 0;
         while (true)
         {
             foreach (var connectNode in minCostNode.ConnectNode)
@@ -486,23 +492,6 @@ public class GameManager : MonoBehaviour
         return null;
     }
 
-    public void GameStart()
-    {
-        StartMenu.SetActive(false);
-        TimerText.gameObject.SetActive(true);
-        StartCoroutine("Initialize");
-    }
-
-    IEnumerator Initialize()
-    {
-        foreach (var node in Map.MapNode)
-        {
-            node.Initialize();
-            yield return null;
-        }
-        IsStart = true;
-    }
-
     void Timer()
     {
         // まだ開始状態じゃないならリターン
@@ -528,23 +517,82 @@ public class GameManager : MonoBehaviour
         IsEnd = true;
         FinishText.gameObject.SetActive(true);
         MyTime.IsTimeStop = true;
+        MinimapCamera.SetActive(false);
+        OperationExplanation.SetActive(false);
+
+        CameraController cameraController = Camera.main.GetComponent<CameraController>();
+        cameraController.IsControll = false;
+
+        PlayerEnum MaxPlayer = PlayerEnum.None;
+        int maxCount = -1;
+        for (int i = 0; i < MapManager.PlayerCount; i++)
+        {
+            int count = Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count();
+            if (count == maxCount)
+            {
+                ResultText.text = "Draw!!";
+                break;
+            }
+            else if (count > maxCount)
+            {
+                ResultText.text = "Draw!!";
+                maxCount = count;
+                MaxPlayer = (PlayerEnum)i;
+            }
+        }
+
+        switch (MaxPlayer)
+        {
+            case PlayerEnum.Player01:
+                ResultText.text = "Red Win!!";
+                break;
+            case PlayerEnum.Player02:
+                ResultText.text = "Blue Win!!";
+                break;
+            case PlayerEnum.Player03:
+                ResultText.text = "Green Win!!";
+                break;
+            case PlayerEnum.Player04:
+                ResultText.text = "Yellow Win!!";
+                break;
+        }
 
         float time = 0;
 
         while (true)
         {
             time += Time.deltaTime;
-            if (time >= 4)
+
+            TimerText.color = Color.Lerp(TimerText.color, Color.clear, 0.1f * Time.deltaTime * 60);
+            FinishText.color = Color.Lerp(FinishText.color, FinishText.color * new Color(1, 1, 1, 0), 0.1f * Time.deltaTime * 60);
+            cameraController.transform.position = Vector3.Lerp(cameraController.transform.position, new Vector3(0, 180, 0), 0.025f * Time.deltaTime * 60);
+            cameraController.transform.rotation = Quaternion.Lerp(Camera.main.transform.rotation, Quaternion.LookRotation(-Vector3.up, Vector3.up), 0.025f * Time.deltaTime * 60);
+            Top.rectTransform.sizeDelta = Vector2.Lerp(Top.rectTransform.sizeDelta, new Vector2(Top.rectTransform.sizeDelta.x, 150), 0.025f * Time.deltaTime * 60);
+            Bottom.rectTransform.sizeDelta = Vector2.Lerp(Bottom.rectTransform.sizeDelta, new Vector2(Bottom.rectTransform.sizeDelta.x, 150), 0.025f * Time.deltaTime * 60);
+            RectTransform rect = GraphManager.GetComponent<RectTransform>();
+            rect.anchoredPosition3D = Vector3.Lerp(rect.anchoredPosition3D, new Vector3(rect.anchoredPosition3D.x, -470, rect.anchoredPosition3D.z), 0.025f * Time.deltaTime * 60);
+            Result.rectTransform.anchoredPosition3D =
+                Vector3.Lerp(Result.rectTransform.anchoredPosition3D, new Vector3(Result.rectTransform.anchoredPosition3D.x, 450, Result.rectTransform.anchoredPosition3D.z), 0.025f * Time.deltaTime * 60);
+            ResultText.rectTransform.anchoredPosition3D =
+                Vector3.Lerp(ResultText.rectTransform.anchoredPosition3D, new Vector3(ResultText.rectTransform.anchoredPosition3D.x, -450, ResultText.rectTransform.anchoredPosition3D.z), 0.025f * Time.deltaTime * 60);
+
+            if (time >= 6)
             {
-                TimerText.color = Color.Lerp(TimerText.color, Color.clear, 0.1f * Time.deltaTime * 60);
-                FinishText.color = Color.Lerp(FinishText.color, FinishText.color * new Color(1, 1, 1, 0), 0.1f * Time.deltaTime * 60);
-                Camera.main.transform.position = Vector3.Lerp(Camera.main.transform.position, new Vector3(0, 90, 0), 0.025f * Time.deltaTime * 60);
-                Camera.main.transform.rotation = Quaternion.Lerp(Camera.main.transform.rotation, Quaternion.LookRotation(-Vector3.up, Vector3.up), 0.025f * Time.deltaTime * 60);
+                TouchToStart.gameObject.SetActive(true);
+                break;
             }
             yield return null;
-            //break;
         }
 
-        yield break;
+        // クリックするまでループ
+        while (true)
+        {
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            {
+                SceneManager.LoadScene("TitleScene");
+            }
+
+            yield return null;
+        }
     }
 }

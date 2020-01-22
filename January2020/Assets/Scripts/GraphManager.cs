@@ -19,10 +19,12 @@ public class GraphManager : MonoBehaviour
         MapManager = GameObject.FindGameObjectWithTag("MapManager").GetComponent<MapManager>();
         GameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 
+        gameObject.SetActive(false);
+
         for (int i = 0; i < MapManager.PlayerCount; i++)
         {
             GraphImage instance = Instantiate(GraphImage_Prefab).GetComponent<GraphImage>();
-            instance.transform.position += Vector3.up * i * -40;
+            instance.transform.position += Vector3.up * i * -60;
             instance.transform.SetParent(transform, false);
 
             instance.PlayerEnum = (PlayerEnum)i;
@@ -59,7 +61,7 @@ public class GraphManager : MonoBehaviour
                 float rate = (count - hoge) / (MaxCount - hoge);
 
                 float destWidth = Mathf.Lerp(MINWIDTH, MAXWIDTH, rate);
-                float destYPos = -40 * i;
+                float destYPos = -60 * i;
 
                 Graphs[i].Image.rectTransform.sizeDelta = new Vector2(Mathf.Lerp(Graphs[i].Image.rectTransform.sizeDelta.x, destWidth, 0.025f * Time.deltaTime * 60), Graphs[i].Image.rectTransform.sizeDelta.y);
                 Graphs[i].Image.transform.localPosition =

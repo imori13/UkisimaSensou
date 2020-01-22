@@ -134,7 +134,7 @@ public class MoveBox : MonoBehaviour
     void AttackWin()
     {
         // マップ上に戦闘結果UIを表示
-        CreateBattleResultUI(Node2.transform.position, Node1.PlayerEnum, Node2.PlayerEnum);
+        CreateBattleResultUI(Node1, Node2);
 
         Soldier.ForEach(s => s.Animator.SetBool("SoldierRun", false));
         Commander.ForEach(c => c.Animator.SetBool("CommanderRun", false));
@@ -214,11 +214,11 @@ public class MoveBox : MonoBehaviour
         Destroy(gameObject);
     }
 
-    void CreateBattleResultUI(Vector3 position, PlayerEnum winNode, PlayerEnum loseNode)
+    void CreateBattleResultUI(Node node1, Node node2)
     {
-        if (winNode == PlayerEnum.None || loseNode == PlayerEnum.None) return;
+        if (node1.PlayerEnum == PlayerEnum.None || node2.PlayerEnum == PlayerEnum.None) return;
 
-        BattleResultUI instance = Instantiate(BattleResultUIPrefab, position + Vector3.up * 1, Quaternion.LookRotation(Vector3.up, Vector3.up));
-        instance.Initialize(winNode, loseNode);
+        BattleResultUI instance = Instantiate(BattleResultUIPrefab, node2.transform.position + Vector3.up * 1, Quaternion.LookRotation(Vector3.up, Vector3.up));
+        instance.Initialize(node1.PlayerEnum);
     }
 }

@@ -13,12 +13,19 @@ public class MapManager : MonoBehaviour
     [SerializeField] GameObject Roads;
     [SerializeField] Node Node;
     [SerializeField] Road Road;
-    [SerializeField] Button StartButton;
-    [SerializeField] Button GenerateButton;
+
+    [SerializeField] Image GameStartImage;
+    [SerializeField] Text GameStartText;
+    [SerializeField] GraphManager GraphManager;
+    [SerializeField] GameObject Timer;
+    [SerializeField] GameObject BattleCanvas;
+    [SerializeField] GameObject MinimapCamera;
+    [SerializeField] GameObject OperationExplanation;
 
     // prefab
     [SerializeField] GameObject CommanderPrefab;
     [SerializeField] GameObject SoldierPrefab;
+    [SerializeField] Animator GameStartAnimation;
 
     public List<Node> MapNode { get; private set; } = new List<Node>();  // 全ノードを格納するリスト
     public List<Road> MapRoad { get; private set; } = new List<Road>();  // 全部の道を格納するリスト
@@ -43,22 +50,18 @@ public class MapManager : MonoBehaviour
     {
         GameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 
+        GameStartImage.gameObject.SetActive(false);
+        GameStartText.gameObject.SetActive(false);
+        MinimapCamera.SetActive(false);
+        OperationExplanation.SetActive(false);
+
         // マップを生成
-        GenerateMap();
+        StartCoroutine("Initialize");
     }
 
     void Update()
     {
         GenerateCharacters();
-    }
-
-    // マップを生成
-    public void GenerateMap()
-    {
-        StartButton.interactable = false;
-        GenerateButton.interactable = false;
-
-        StartCoroutine("Initialize");
     }
 
     IEnumerator Initialize()
@@ -140,7 +143,7 @@ public class MapManager : MonoBehaviour
             instance.GameManager = GameManager;
 
             count++;
-            if (count >= 10) { count = 0; yield return null; }
+            if (count >= 4) { count = 0; yield return null; }
 
             // すでに追加されているノードと比べてどれか近かったら追加しない
             bool flag = false;
@@ -209,7 +212,7 @@ public class MapManager : MonoBehaviour
                 road.PosE = MyMath.ConversionVector2(MapNode[j].transform.position);
 
                 count++;
-                if (count >= 3) { count = 0; yield return null; }
+                if (count >= 1) { count = 0; yield return null; }
 
                 // すでにある道と交差していたら、スキップ
                 bool flag1 = false;
@@ -425,10 +428,138 @@ public class MapManager : MonoBehaviour
 
         MapNode.ForEach(n => n.UpdateNodeColor());
 
-        StartButton.interactable = true;
-        GenerateButton.interactable = true;
+        StartCoroutine("GameStart");
 
         yield break;
+    }
+
+
+    // ノードを初期化
+    IEnumerator GameStart()
+    {
+        foreach (var node in MapNode)
+        {
+            node.Initialize();
+            yield return null;
+        }
+
+        CameraController CameraController = Camera.main.GetComponent<CameraController>();
+
+        float time = 0;
+        float rotation = 0;
+        Vector2 distance01 = new Vector2(35, 8);
+        Vector2 distance02 = new Vector2(80, 20);
+        Vector3 pos = Vector3.zero;
+
+        GameStartImage.gameObject.SetActive(true);
+        GameStartText.gameObject.SetActive(true);
+
+        float height = GameStartImage.rectTransform.sizeDelta.y;
+        GameStartImage.rectTransform.sizeDelta = new Vector2(GameStartImage.rectTransform.sizeDelta.x, 0);
+        GameStartText.color *= new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0);
+
+        while (true)
+        {
+            time += Time.deltaTime;
+
+            if (time >= 15f && time <= 35)
+            {
+                if (time <= 30)
+                    rotation += 0.5f * Time.deltaTime * 60;
+                else
+                    GameStartImage.rectTransform.sizeDelta =
+                    Vector2.Lerp(GameStartImage.rectTransform.sizeDelta, new Vector2(GameStartImage.rectTransform.sizeDelta.x, 0), 0.05f * Time.deltaTime * 60);
+
+                if (time <= 25)
+                {
+                    if (time <= 23)
+                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
+                    else
+                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.05f * Time.deltaTime * 60);
+
+                    GameStartText.text = "敵から陣地を奪って、敵よりも多くの陣地を獲得しよう";
+                }
+                else
+                {
+                    if (time <= 29.5f)
+                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
+                    else
+                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.05f * Time.deltaTime * 60);
+
+                    GameStartText.text = "ゲーム終了時に一番多くの拠点を持つプレイヤーが勝利する";
+                }
+
+                pos = Vector3.zero;
+                CameraController.transform.position =
+                Vector3.Lerp(
+                    CameraController.transform.position,
+                    (pos + (MyMath.RadToVec3(rotation * Mathf.Deg2Rad) * distance02.x)) + (Vector3.up * distance02.y),
+                    0.005f * Time.deltaTime * 60);
+                CameraController.transform.rotation = Quaternion.Lerp(CameraController.transform.rotation, Quaternion.LookRotation(pos - CameraController.transform.position, Vector3.up), 0.025f * Time.deltaTime * 60);
+            }
+            else if (time <= 15f)
+            {
+                GameStartImage.rectTransform.sizeDelta =
+                    Vector2.Lerp(GameStartImage.rectTransform.sizeDelta, new Vector2(GameStartImage.rectTransform.sizeDelta.x, height), 0.05f * Time.deltaTime * 60);
+                if (time <= 10)
+                    rotation += 0.5f * Time.deltaTime * 60;
+
+
+                if (time <= 7)
+                {
+                    if (time <= 6)
+                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
+                    else
+                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.025f * Time.deltaTime * 60);
+
+                    GameStartText.text = "浮島が舞台の陣取りゲーム";
+                }
+                else
+                {
+                    if (time <= 14)
+                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
+                    else
+                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.025f * Time.deltaTime * 60);
+
+                    GameStartText.text = "拠点から生成される指揮官と兵士を移動させて陣地を広げられる";
+                }
+
+                pos = PlayerBaseNode[(int)PlayerEnum.Player01].transform.position;
+                CameraController.transform.position =
+                Vector3.Lerp(
+                    CameraController.transform.position,
+                    (pos + (MyMath.RadToVec3(rotation * Mathf.Deg2Rad) * distance01.x)) + (Vector3.up * distance01.y),
+                    0.005f * Time.deltaTime * 60);
+                CameraController.transform.rotation = Quaternion.Lerp(CameraController.transform.rotation, Quaternion.LookRotation(pos - CameraController.transform.position, Vector3.up), 0.025f * Time.deltaTime * 60);
+            }
+            //else
+            {
+                CameraController.IsControll = true;
+                CameraController.DestPosition = PlayerBaseNode[(int)PlayerEnum.Player01].transform.position;
+                GraphManager.gameObject.SetActive(true);
+                Timer.SetActive(true);
+                MinimapCamera.SetActive(true);
+                OperationExplanation.SetActive(true);
+                break;
+            }
+
+            yield return null;
+        }
+
+        Animator animator = Instantiate(GameStartAnimation).GetComponent<Animator>();
+        animator.transform.SetParent(BattleCanvas.transform);
+        animator.GetComponent<RectTransform>().anchoredPosition3D = Vector3.zero;
+
+        while (true)
+        {
+            if (animator == null)
+            {
+                GameManager.IsStart = true;
+                break;
+            }
+
+            yield return null;
+        }
     }
 
     void GenerateCharacters()

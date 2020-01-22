@@ -3,20 +3,32 @@
 public class CameraController : MonoBehaviour
 {
     [SerializeField] GameManager GameManager;
+    [SerializeField] MapManager MapManager;
     Vector3 destVelocity;
     public Vector3 DestPosition { get; set; }
     Vector3 offsetDirection = new Vector3(0, 25, -15).normalized;
-    float distance = 0;
+    float distance = clampMaxPos.y;
 
     static readonly Vector3 clampMinPos = new Vector3(-100, 10, -100);
     static readonly Vector3 clampMaxPos = new Vector3(100, 35, 100);
 
+    public bool IsControll { get; set; }
+
     void Start()
     {
         Camera.main.depthTextureMode = DepthTextureMode.Depth;
+
+        transform.position = Vector3.up * 120;
+        transform.rotation = Quaternion.LookRotation(-Vector3.up, Vector3.up);
     }
 
     void Update()
+    {
+        if (IsControll)
+            ControllCamera();
+    }
+
+    void ControllCamera()
     {
         float moveSpeed = 1.25f;
         float updownSpeed = 15f;
@@ -40,16 +52,18 @@ public class CameraController : MonoBehaviour
         distance = Mathf.Clamp(distance, clampMinPos.y, clampMaxPos.y);
 
         // 移動量を座標に足す
-        if (!GameManager.IsEnd)
-            transform.position = new Vector3(
-                Mathf.Lerp(transform.position.x, DestPosition.x + (offsetDirection.x * distance), 0.05f * Time.deltaTime * 60),
-                Mathf.Lerp(transform.position.y, DestPosition.y + (offsetDirection.y * distance), 0.1f * Time.deltaTime * 60),
-                Mathf.Lerp(transform.position.z, DestPosition.z + (offsetDirection.z * distance), 0.05f * Time.deltaTime * 60));
+        transform.position = new Vector3(
+            Mathf.Lerp(transform.position.x, DestPosition.x + (offsetDirection.x * distance), 0.05f * Time.deltaTime * 60),
+            Mathf.Lerp(transform.position.y, DestPosition.y + (offsetDirection.y * distance), 0.1f * Time.deltaTime * 60),
+            Mathf.Lerp(transform.position.z, DestPosition.z + (offsetDirection.z * distance), 0.05f * Time.deltaTime * 60));
 
         // 座標を指定の範囲に制限する
         transform.position = new Vector3(
             Mathf.Clamp(transform.position.x, clampMinPos.x, clampMaxPos.x),
             Mathf.Clamp(transform.position.y, clampMinPos.y, clampMaxPos.y),
             Mathf.Clamp(transform.position.z, clampMinPos.z, clampMaxPos.z));
+
+        // カメラの向きを調整
+        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(-offsetDirection, Vector3.up), 0.025f * Time.deltaTime * 60);
     }
 }
