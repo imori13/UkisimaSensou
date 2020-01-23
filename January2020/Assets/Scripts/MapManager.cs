@@ -70,7 +70,7 @@ public class MapManager : MonoBehaviour
         foreach (var road in MapRoad)
         {
             count++;
-            if (count >= 3) { count = 0; yield return null; }
+            if (count >= 5) { count = 0; yield return null; }
             Destroy(road.GetComponent<MeshRenderer>().material);
             Destroy(road.gameObject);
         }
@@ -80,7 +80,7 @@ public class MapManager : MonoBehaviour
         foreach (var node in MapNode)
         {
             count++;
-            if (count >= 3) { count = 0; yield return null; }
+            if (count >= 5) { count = 0; yield return null; }
             Destroy(node.MeshRenderer.material);
             Destroy(node.gameObject);
         }
@@ -143,7 +143,7 @@ public class MapManager : MonoBehaviour
             instance.GameManager = GameManager;
 
             count++;
-            if (count >= 4) { count = 0; yield return null; }
+            if (count >= 10) { count = 0; yield return null; }
 
             // すでに追加されているノードと比べてどれか近かったら追加しない
             bool flag = false;
@@ -212,7 +212,7 @@ public class MapManager : MonoBehaviour
                 road.PosE = MyMath.ConversionVector2(MapNode[j].transform.position);
 
                 count++;
-                if (count >= 1) { count = 0; yield return null; }
+                if (count >= 3) { count = 0; yield return null; }
 
                 // すでにある道と交差していたら、スキップ
                 bool flag1 = false;
@@ -470,7 +470,7 @@ public class MapManager : MonoBehaviour
                     GameStartImage.rectTransform.sizeDelta =
                     Vector2.Lerp(GameStartImage.rectTransform.sizeDelta, new Vector2(GameStartImage.rectTransform.sizeDelta.x, 0), 0.05f * Time.deltaTime * 60);
 
-                if (time <= 25)
+                if (time <= 24)
                 {
                     if (time <= 23)
                         GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
@@ -486,7 +486,7 @@ public class MapManager : MonoBehaviour
                     else
                         GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.05f * Time.deltaTime * 60);
 
-                    GameStartText.text = "ゲーム終了時に一番多くの拠点を持つプレイヤーが勝利します";
+                    GameStartText.text = "ゲーム終了時に一番多くの拠点を持つプレイヤーが勝利";
                 }
 
                 pos = Vector3.zero;
@@ -512,7 +512,7 @@ public class MapManager : MonoBehaviour
                     else
                         GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.025f * Time.deltaTime * 60);
 
-                    GameStartText.text = "陣取りゲーム";
+                    GameStartText.text = "陣取りゲーム 浮島戦争";
                 }
                 else
                 {
@@ -549,7 +549,7 @@ public class MapManager : MonoBehaviour
         Animator animator = Instantiate(GameStartAnimation).GetComponent<Animator>();
         animator.transform.SetParent(BattleCanvas.transform);
         animator.GetComponent<RectTransform>().anchoredPosition3D = Vector3.zero;
-
+        
         while (true)
         {
             if (animator == null)
@@ -568,8 +568,7 @@ public class MapManager : MonoBehaviour
         if (!GameManager.IsStart) return;
         // ゲームが終了していたらリターン
         if (GameManager.IsEnd) { return; }
-
-
+        
         for (int i = 0; i < PlayerCount; i++)
         {
             cGeneTime[i] += MyTime.deltaTime;

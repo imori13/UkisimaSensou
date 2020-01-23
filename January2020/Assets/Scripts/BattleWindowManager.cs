@@ -24,12 +24,16 @@ public class BattleWindowManager : MonoBehaviour
     [SerializeField] Image DefenceBackImage;
     [SerializeField] Material[] SoldierMaterials;
     [SerializeField] Material[] CommanderMaterials;
+    [SerializeField] GameObject skipspace;
+
     List<BattleSoldier> attackBattleSoldier = new List<BattleSoldier>();
     List<BattleCommander> attackBattleCommander = new List<BattleCommander>();
     List<BattleSoldier> defenceBattleSoldier = new List<BattleSoldier>();
     List<BattleCommander> defenceBattleCommander = new List<BattleCommander>();
     List<Image> AttackDiceImageList = new List<Image>();
     List<Image> DefenceDiceImageList = new List<Image>();
+
+    bool flag = false;
 
     static Vector3 BATTLE_POS = new Vector3(0, 0, -500f);
 
@@ -42,12 +46,23 @@ public class BattleWindowManager : MonoBehaviour
         BattleCameraBackImage.SetActive(false);
         AttackBackImage.gameObject.SetActive(false);
         DefenceBackImage.gameObject.SetActive(false);
+        skipspace.SetActive(false);
         AttackBackImage.color = Color.clear;
         DefenceBackImage.color = Color.clear;
         AttackCombatPowerText.text = "";
         DefenceCombatPowerText.text = "";
         AttackMultiplicationText.text = "";
         DefenceMultiplicationText.text = "";
+        flag = false;
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space) && !flag && BattleMoveBox != null)
+        {
+            StopAllCoroutines();
+            StartCoroutine("State08");
+        }
     }
 
     public void Initialize(MoveBox moveBox)
@@ -60,6 +75,8 @@ public class BattleWindowManager : MonoBehaviour
         attackBattleCommander.Clear();
         defenceBattleSoldier.Clear();
         defenceBattleCommander.Clear();
+
+        skipspace.SetActive(true);
 
         BattleMoveBox = moveBox;
 
@@ -116,7 +133,7 @@ public class BattleWindowManager : MonoBehaviour
             Destroy(material);
             defenceBattleCommander.Add(instance);
         }
-        
+
         attackBattleSoldier.ForEach(s => s.Animator.SetBool("SoldierRun", true));
         attackBattleSoldier.ForEach(s => s.Animator.CrossFade("SoldierRun", 0, 0, Random.Range(0f, 1f)));
         attackBattleCommander.ForEach(c => c.Animator.SetBool("CommanderRun", true));
@@ -288,7 +305,7 @@ public class BattleWindowManager : MonoBehaviour
             endTime += Time.deltaTime;
             randomTime += Time.deltaTime;
 
-            if (endTime >= 3)
+            if (endTime >= 1)
             {
                 break;
             }
@@ -435,6 +452,7 @@ public class BattleWindowManager : MonoBehaviour
     IEnumerator State07()
     {
         bool attackWin = BattleMoveBox.ButtleResult.AttackTotalCombatPower >= BattleMoveBox.ButtleResult.DefenceTotalCombatPower;
+        flag = true;
 
         if (attackWin)
         {
@@ -476,6 +494,7 @@ public class BattleWindowManager : MonoBehaviour
                 Destroy(s.gameObject);
                 yield return new WaitForSeconds(Random.Range(0.05f, 0.25f));
             }
+            defenceBattleSoldier.Clear();
 
             defenceBattleCommander = defenceBattleCommander.OrderBy(a => System.Guid.NewGuid()).ToList();
             foreach (var c in defenceBattleCommander)
@@ -485,6 +504,7 @@ public class BattleWindowManager : MonoBehaviour
                 Destroy(c.gameObject);
                 yield return new WaitForSeconds(Random.Range(0.05f, 0.25f));
             }
+            defenceBattleCommander.Clear();
         }
         else
         {
@@ -496,6 +516,7 @@ public class BattleWindowManager : MonoBehaviour
                 Destroy(s.gameObject);
                 yield return new WaitForSeconds(Random.Range(0.05f, 0.25f));
             }
+            attackBattleSoldier.Clear();
 
             attackBattleCommander = attackBattleCommander.OrderBy(a => System.Guid.NewGuid()).ToList();
             foreach (var c in attackBattleCommander)
@@ -505,6 +526,7 @@ public class BattleWindowManager : MonoBehaviour
                 Destroy(c.gameObject);
                 yield return new WaitForSeconds(Random.Range(0.05f, 0.25f));
             }
+            attackBattleCommander.Clear();
         }
 
         float time2 = 0;
@@ -520,15 +542,19 @@ public class BattleWindowManager : MonoBehaviour
         {
             attackBattleSoldier.ForEach(s => Destroy(s.SkinnedMeshRenderer.material));
             attackBattleSoldier.ForEach(s => Destroy(s.gameObject));
+            attackBattleSoldier.Clear();
             attackBattleCommander.ForEach(c => Destroy(c.SkinnedMeshRenderer.material));
             attackBattleCommander.ForEach(c => Destroy(c.gameObject));
+            attackBattleCommander.Clear();
         }
         else
         {
             defenceBattleSoldier.ForEach(s => Destroy(s.SkinnedMeshRenderer.material));
             defenceBattleSoldier.ForEach(s => Destroy(s.gameObject));
+            defenceBattleSoldier.Clear();
             defenceBattleCommander.ForEach(c => Destroy(c.SkinnedMeshRenderer.material));
             defenceBattleCommander.ForEach(c => Destroy(c.gameObject));
+            defenceBattleCommander.Clear();
         }
 
         StartCoroutine("State08");
@@ -538,10 +564,25 @@ public class BattleWindowManager : MonoBehaviour
     // 戦闘ウィンドウを閉じる
     IEnumerator State08()
     {
+        flag = false;
+        attackBattleSoldier.ForEach(s => Destroy(s.SkinnedMeshRenderer.material));
+        attackBattleSoldier.ForEach(s => Destroy(s.gameObject));
+        attackBattleSoldier.Clear();
+        attackBattleCommander.ForEach(c => Destroy(c.SkinnedMeshRenderer.material));
+        attackBattleCommander.ForEach(c => Destroy(c.gameObject));
+        attackBattleCommander.Clear();
+        defenceBattleSoldier.ForEach(s => Destroy(s.SkinnedMeshRenderer.material));
+        defenceBattleSoldier.ForEach(s => Destroy(s.gameObject));
+        defenceBattleSoldier.Clear();
+        defenceBattleCommander.ForEach(c => Destroy(c.SkinnedMeshRenderer.material));
+        defenceBattleCommander.ForEach(c => Destroy(c.gameObject));
+        defenceBattleCommander.Clear();
+
         BattleCamera.SetActive(false);
         BattleCameraBackImage.SetActive(false);
         AttackBackImage.gameObject.SetActive(false);
         DefenceBackImage.gameObject.SetActive(false);
+        skipspace.SetActive(false);
         AttackBackImage.color = Color.clear;
         DefenceBackImage.color = Color.clear;
         AttackCombatPowerText.text = "";

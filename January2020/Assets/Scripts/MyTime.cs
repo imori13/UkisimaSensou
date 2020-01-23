@@ -22,7 +22,7 @@ public sealed class MyTime : MonoBehaviour
     {
         destTimeScale = 1f;
         timeScale = Mathf.Lerp(timeScale, destTimeScale, 0.2f * Time.deltaTime * 60);
-        if (Input.GetKey(KeyCode.Space) || IsTimeStop)
+        if ( IsTimeStop)
         {
             timeScale = 0;
         }
