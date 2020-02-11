@@ -3472,7 +3472,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Nodes: {fileID: 1253823508}
   Roads: {fileID: 204729851}
-  Node: {fileID: 186564725629547487, guid: dd8fc66815e25504ebec89d7b0bfd98d, type: 3}
+  Node: {fileID: 2544813049031575273, guid: dd8fc66815e25504ebec89d7b0bfd98d, type: 3}
   Road: {fileID: 4097422512519831745, guid: 988baa773988ae04b927af5829ec4777, type: 3}
   GameStartImage: {fileID: 1369172195}
   GameStartText: {fileID: 1602379108}
