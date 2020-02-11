@@ -462,32 +462,20 @@ public class MapManager : MonoBehaviour
         {
             time += Time.deltaTime;
 
-            if (time >= 15f && time <= 35)
+            if (time >= 7 && time <= 15)
             {
-                if (time <= 30)
+                if (time <= 13.5f)
                     rotation += 0.5f * Time.deltaTime * 60;
                 else
                     GameStartImage.rectTransform.sizeDelta =
-                    Vector2.Lerp(GameStartImage.rectTransform.sizeDelta, new Vector2(GameStartImage.rectTransform.sizeDelta.x, 0), 0.05f * Time.deltaTime * 60);
+                    Vector2.Lerp(GameStartImage.rectTransform.sizeDelta, new Vector2(GameStartImage.rectTransform.sizeDelta.x, 0), 0.1f * Time.deltaTime * 60);
 
-                if (time <= 24)
-                {
-                    if (time <= 23)
-                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
-                    else
-                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.05f * Time.deltaTime * 60);
-
-                    GameStartText.text = "敵とバトルして、敵よりも多くの陣地を獲得しよう";
-                }
+                if (time <= 13.5f)
+                    GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.05f * Time.deltaTime * 60);
                 else
-                {
-                    if (time <= 29.5f)
-                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
-                    else
-                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.05f * Time.deltaTime * 60);
+                    GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.1f * Time.deltaTime * 60);
 
-                    GameStartText.text = "ゲーム終了時に一番多くの拠点を持つプレイヤーが勝利";
-                }
+                GameStartText.text = "ゲーム終了時に一番多くの拠点を持つプレイヤーが勝利";
 
                 pos = Vector3.zero;
                 CameraController.transform.position =
@@ -497,39 +485,26 @@ public class MapManager : MonoBehaviour
                     0.005f * Time.deltaTime * 60);
                 CameraController.transform.rotation = Quaternion.Lerp(CameraController.transform.rotation, Quaternion.LookRotation(pos - CameraController.transform.position, Vector3.up), 0.025f * Time.deltaTime * 60);
             }
-            else if (time <= 15f)
+            else if (time <= 7)
             {
                 GameStartImage.rectTransform.sizeDelta =
-                    Vector2.Lerp(GameStartImage.rectTransform.sizeDelta, new Vector2(GameStartImage.rectTransform.sizeDelta.x, height), 0.05f * Time.deltaTime * 60);
-                if (time <= 10)
+                    Vector2.Lerp(GameStartImage.rectTransform.sizeDelta, new Vector2(GameStartImage.rectTransform.sizeDelta.x, height), 0.1f * Time.deltaTime * 60);
+                if (time <= 6.5f)
                     rotation += 0.5f * Time.deltaTime * 60;
 
-
-                if (time <= 7)
-                {
-                    if (time <= 6)
-                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
-                    else
-                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.025f * Time.deltaTime * 60);
-
-                    GameStartText.text = "陣取りゲーム 浮島戦争";
-                }
+                if (time <= 6.5f)
+                    GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.05f * Time.deltaTime * 60);
                 else
-                {
-                    if (time <= 14)
-                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 1), 0.025f * Time.deltaTime * 60);
-                    else
-                        GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.025f * Time.deltaTime * 60);
+                    GameStartText.color = Color.Lerp(GameStartText.color, new Color(GameStartText.color.r, GameStartText.color.g, GameStartText.color.b, 0), 0.05f * Time.deltaTime * 60);
 
-                    GameStartText.text = "拠点から生成される兵士を移動させて陣地を広げられる";
-                }
+                GameStartText.text = "陣取りゲーム 浮島戦争";
 
                 pos = PlayerBaseNode[(int)PlayerEnum.Player01].transform.position;
                 CameraController.transform.position =
                 Vector3.Lerp(
                     CameraController.transform.position,
                     (pos + (MyMath.RadToVec3(rotation * Mathf.Deg2Rad) * distance01.x)) + (Vector3.up * distance01.y),
-                    0.005f * Time.deltaTime * 60);
+                    0.01f * Time.deltaTime * 60);
                 CameraController.transform.rotation = Quaternion.Lerp(CameraController.transform.rotation, Quaternion.LookRotation(pos - CameraController.transform.position, Vector3.up), 0.025f * Time.deltaTime * 60);
             }
             else
@@ -549,7 +524,7 @@ public class MapManager : MonoBehaviour
         Animator animator = Instantiate(GameStartAnimation).GetComponent<Animator>();
         animator.transform.SetParent(BattleCanvas.transform);
         animator.GetComponent<RectTransform>().anchoredPosition3D = Vector3.zero;
-        
+
         while (true)
         {
             if (animator == null)
@@ -568,7 +543,7 @@ public class MapManager : MonoBehaviour
         if (!GameManager.IsStart) return;
         // ゲームが終了していたらリターン
         if (GameManager.IsEnd) { return; }
-        
+
         for (int i = 0; i < PlayerCount; i++)
         {
             cGeneTime[i] += MyTime.deltaTime;

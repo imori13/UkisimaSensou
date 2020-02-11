@@ -46,7 +46,7 @@ public class GameManager : MonoBehaviour
         // 選択しているノードをnull
         SelectNode = null;
         TimerText.gameObject.SetActive(false);
-        GamePlayTime = 600;
+        GamePlayTime = 300;
         BattleWindowManager = GetComponent<BattleWindowManager>();
     }
 
@@ -505,7 +505,7 @@ public class GameManager : MonoBehaviour
 
         // ゲームの終了条件
         // 時間が0以下なら、またはプレイヤーの領土が0なら、またはすべて占領したら
-        if (GamePlayTime <= 0 || Map.MapNode.Count(n => n.PlayerEnum == PlayerEnum.Player01) <= 0 || Map.MapNode.All(n => n.PlayerEnum == PlayerEnum.Player01))
+        if (GamePlayTime <= 0 || Map.MapNode.Count(n => n.PlayerEnum == PlayerEnum.Player01) <= 0 || Map.MapNode.All(n => n.PlayerEnum == PlayerEnum.Player01)||Input.GetKeyDown(KeyCode.Alpha1))
         {
             StartCoroutine("FinishGame");
         }
@@ -528,16 +528,22 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < MapManager.PlayerCount; i++)
         {
             int count = Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count();
-            if (count == maxCount)
+
+            if (count > maxCount)
             {
-                ResultText.text = "Draw!!";
-                break;
-            }
-            else if (count > maxCount)
-            {
-                ResultText.text = "Draw!!";
                 maxCount = count;
                 MaxPlayer = (PlayerEnum)i;
+            }
+        }
+
+        for (int i = 0; i < MapManager.PlayerCount; i++)
+        {
+            int count = Map.MapNode.Where(n => n.PlayerEnum == (PlayerEnum)i).Count();
+
+            if ((PlayerEnum)i != MaxPlayer && count == maxCount)
+            {
+                ResultText.text = "Draw!!";
+                MaxPlayer = PlayerEnum.None;
             }
         }
 
@@ -589,6 +595,7 @@ public class GameManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
             {
+                MyTime.IsTimeStop = false;
                 SceneManager.LoadScene("TitleScene");
             }
 

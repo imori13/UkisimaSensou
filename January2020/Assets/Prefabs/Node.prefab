@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3576026485412837135}
   - component: {fileID: 1560365405816749444}
   - component: {fileID: 8097249657140488034}
-  - component: {fileID: 186564725629547487}
   - component: {fileID: 3980115432831330822}
   m_Layer: 0
   m_Name: Node
@@ -80,49 +79,6 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!114 &186564725629547487
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2395025417874019234}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b178a60bf9b7ba74db19f127ac7fe57d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  CommanderPrefab: {fileID: 3479774594516843672, guid: 1b10e30b899a2744381357b1bf9f19ab,
-    type: 3}
-  SoldierPrefab: {fileID: 6981542376784977259, guid: 43feeb50f6007ca49b56f0beeb385442,
-    type: 3}
-  NodeMesh: {fileID: 6591504653238808176, guid: 8c9f6ac9363e3e744ac0a297c12b4931,
-    type: 3}
-  BaseMesh: {fileID: -8787456128594687885, guid: ce299a0ecaf808243aa5ebfe4a9e0666,
-    type: 3}
-  TowerMesh: {fileID: 7328274621346949332, guid: d8ea464ebd4e7e145bb9fee7e6bb5b85,
-    type: 3}
-  Player01Material: {fileID: 2100000, guid: fc57ad1cc8ee84e4f84eb7069a718972, type: 2}
-  Player01BaseMaterial: {fileID: 2100000, guid: 5e5457e0648d9c84bbe46e5bb70b8d45,
-    type: 2}
-  Player01TowerMaterial: {fileID: 2100000, guid: 58e9d7f0b09debd4fa3a4e5742abb73c,
-    type: 2}
-  Player02Material: {fileID: 2100000, guid: 947443d56d9367640b333b46249d7647, type: 2}
-  Player02BaseMaterial: {fileID: 2100000, guid: c677ff9d5d0dfee4ca3afbef8a499362,
-    type: 2}
-  Player02TowerMaterial: {fileID: 2100000, guid: 505394641c5c15a4eb995bc0422afe7f,
-    type: 2}
-  Player03Material: {fileID: 2100000, guid: 4013f20885a5a7d40b485c89cfbd5d34, type: 2}
-  Player03BaseMaterial: {fileID: 2100000, guid: 4666c357b520e7948b54f3808ad296d8,
-    type: 2}
-  Player03TowerMaterial: {fileID: 2100000, guid: 03c55f93feac3e54eb83d0ab5e34ffc3,
-    type: 2}
-  Player04Material: {fileID: 2100000, guid: f14ca00347694364cbd934de0a04bffa, type: 2}
-  Player04BaseMaterial: {fileID: 2100000, guid: ad7b055139bd4aa4683090deacdf747d,
-    type: 2}
-  Player04TowerMaterial: {fileID: 2100000, guid: e8eb36631a02b8d40a96ede30549bfe8,
-    type: 2}
-  NoneMaterial: {fileID: 2100000, guid: 3b16f1901f99e734baff89a88780d038, type: 2}
 --- !u!65 &3980115432831330822
 BoxCollider:
   m_ObjectHideFlags: 0
